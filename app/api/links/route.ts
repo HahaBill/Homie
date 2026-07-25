@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, audit } from "@/lib/server/supabase";
-import { mintToken } from "@/lib/server/token";
+import { secretsMatch } from "@/lib/server/secret-compare";
+import { MAX_TTL_SECONDS, mintToken } from "@/lib/server/token";
 
 /**
  * Report-link generation (docs/ARCHITECTURE.md).
@@ -23,7 +24,7 @@ const DEFAULT_TTL_SECONDS = 72 * 60 * 60;
 
 export async function POST(req: NextRequest) {
   const secret = process.env.LINK_API_SECRET;
-  if (!secret || req.headers.get("x-homie-secret") !== secret) {
+  if (!secret || !secretsMatch(req.headers.get("x-homie-secret"), secret)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -70,6 +71,8 @@ export async function POST(req: NextRequest) {
 
 function clampTtl(requested: number | undefined): number {
   if (!requested || !Number.isFinite(requested)) return DEFAULT_TTL_SECONDS;
-  // Never below 5 minutes, never above 7 days.
-  return Math.min(Math.max(Math.floor(requested), 300), 7 * 24 * 60 * 60);
+  // Never below 5 minutes, never above mintToken's own ceiling — the clamp and
+  // the signer must agree, or a caller's out-of-range TTL becomes a RangeError
+  // instead of a clamped one.
+  return Math.min(Math.max(Math.floor(requested), 300), MAX_TTL_SECONDS);
 }

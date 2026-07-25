@@ -46,19 +46,62 @@ export async function findOrCreateUserByPhone(env: Env, phone: string): Promise<
 }
 
 /**
- * Webhook replay guard. Sendblue retries deliveries; the first insert of a
- * dedupe key wins and every later one hits the primary key and returns
- * false. Callers claim before writing anything else so a retry can never
- * double-book a check-in or double-reply.
+ * How long a claim may sit in "processing" before a retry is allowed to take
+ * it over. Comfortably longer than the worst-case inbound pipeline (one model
+ * call plus a handful of Supabase round trips), short enough that a genuinely
+ * dropped delivery still gets a second chance while Sendblue is retrying.
+ */
+const CLAIM_LEASE_MS = 5 * 60 * 1000;
+
+/**
+ * Webhook replay guard. Sendblue retries deliveries, so the worker claims each
+ * one before writing anything else and a retry can never double-book a
+ * check-in or double-reply.
+ *
+ * The claim is a lease, not a tombstone. An insert-only guard suppresses the
+ * retry the moment the key lands — which means a delivery that claimed and
+ * then died mid-pipeline (model timeout, isolate eviction, Supabase blip) is
+ * permanently swallowed: the message is never processed and never retried.
+ * So a claim starts as "processing" and only becomes "completed" once the
+ * pipeline has actually finished. A duplicate of a completed event is
+ * rejected; a duplicate of a lease older than CLAIM_LEASE_MS is handed to the
+ * retry that asked for it.
  */
 export async function claimWebhookEvent(env: Env, dedupeKey: string): Promise<boolean> {
   const db = client(env);
-  const { error } = await db.from("webhook_events").insert({ dedupe_key: dedupeKey });
-  if (error) {
-    if (error.code === "23505") return false;
-    throw new Error(`claimWebhookEvent: ${error.message}`);
-  }
-  return true;
+  const now = new Date();
+  const { error } = await db
+    .from("webhook_events")
+    .insert({ dedupe_key: dedupeKey, status: "processing", claimed_at: now.toISOString() });
+  if (!error) return true;
+  if (error.code !== "23505") throw new Error(`claimWebhookEvent: ${error.message}`);
+
+  // The key exists. Reclaim it only if it is an expired lease — the filters
+  // ride on the UPDATE itself, so two concurrent retries can't both win: the
+  // first moves claimed_at forward and the second no longer matches.
+  const staleBefore = new Date(now.getTime() - CLAIM_LEASE_MS).toISOString();
+  const { data, error: reclaimError } = await db
+    .from("webhook_events")
+    .update({ claimed_at: now.toISOString() })
+    .eq("dedupe_key", dedupeKey)
+    .eq("status", "processing")
+    .lt("claimed_at", staleBefore)
+    .select("dedupe_key");
+  if (reclaimError) throw new Error(`claimWebhookEvent: ${reclaimError.message}`);
+  return (data?.length ?? 0) > 0;
+}
+
+/**
+ * Closes a claim. Until this runs the event is only leased, so a crash between
+ * claim and completion leaves the delivery retryable rather than lost.
+ */
+export async function completeWebhookEvent(env: Env, dedupeKey: string): Promise<void> {
+  const db = client(env);
+  const { error } = await db
+    .from("webhook_events")
+    .update({ status: "completed" })
+    .eq("dedupe_key", dedupeKey);
+  if (error) throw new Error(`completeWebhookEvent: ${error.message}`);
 }
 
 /** Most recent checkin awaiting a reply, if any. */

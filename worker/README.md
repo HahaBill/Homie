@@ -77,10 +77,26 @@ real Sendblue delivery.
 
 ## Database
 
-The schema is the repo-root `supabase/` project (`supabase db push`, or the
-SQL editor), shared with the Next.js API routes — this directory deliberately
-has no copy of its own. The worker needs `webhook_events`
-(`20260725191500_webhook_events.sql`) on top of the applied init schema.
+The schema is the repo-root `supabase/` project, shared with the Next.js API
+routes — this directory deliberately has no copy of its own.
+
+Apply it with `supabase db push` from the repo root. That is the supported
+path: the migrations are an ordered chain, and the worker's replay guard spans
+three of them.
+
+```
+20260725191226_webhook_events.sql        creates webhook_events
+20260725191500_webhook_events.sql        no-op re-statement (create … if not exists)
+20260725210000_webhook_events_lease.sql  adds status + claimed_at; REQUIRED
+```
+
+The third is not optional. Without it `claimWebhookEvent` writes columns that
+don't exist and every inbound message fails. If you are applying SQL by hand
+in the editor rather than using the CLI, run all three in timestamp order.
+
+The cron route additionally needs
+`20260725210500_one_morning_checkin_per_day.sql`, whose partial unique index is
+what stops a repeated cron trigger from sending two morning messages.
 
 ## Deploy
 

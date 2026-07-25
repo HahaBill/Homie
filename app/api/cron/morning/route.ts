@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, audit } from "@/lib/server/supabase";
 import { fetchPressure, type PressureSnapshot } from "@/lib/server/openmeteo";
+import { secretsMatch } from "@/lib/server/secret-compare";
 
 /**
  * The morning message (PRD §5), fired by Vercel cron — see vercel.json.
@@ -22,6 +23,10 @@ import { fetchPressure, type PressureSnapshot } from "@/lib/server/openmeteo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Sends are sequential and each Sendblue call allows up to 15s, so the default
+// serverless ceiling can kill the loop partway through the user list. The
+// per-user claim above makes a truncated run safe to re-trigger.
+export const maxDuration = 60;
 
 type UserRow = {
   id: string;
@@ -32,7 +37,7 @@ type UserRow = {
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || !secretsMatch(req.headers.get("authorization"), `Bearer ${secret}`)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -52,43 +57,82 @@ export async function GET(req: NextRequest) {
 
   const results: Array<Record<string, unknown>> = [];
   for (const user of (users ?? []) as UserRow[]) {
-    if (!withinWakingHours(user.timezone)) {
-      results.push({ user: user.id, skipped: "quiet_hours" });
-      continue;
-    }
+    // One user's failure is never allowed to cost everyone else their morning
+    // message, so each iteration is isolated. Anything thrown below — a
+    // Supabase outage, an audit write, a malformed row — is recorded against
+    // that user and the loop moves on.
+    try {
+      if (!withinWakingHours(user.timezone)) {
+        results.push({ user: user.id, skipped: "quiet_hours" });
+        continue;
+      }
 
-    const text = composeMorning(user, snapshot);
+      const text = composeMorning(user, snapshot);
 
-    if (dryRun) {
-      results.push({ user: user.id, dry_run: true, preview: text });
-      continue;
-    }
+      if (dryRun) {
+        results.push({ user: user.id, dry_run: true, preview: text });
+        continue;
+      }
 
-    const sent = await sendViaSendblue(user.phone, text);
-    if (!sent.ok) {
-      await audit("morning_send_failed", user.id, { error: sent.error });
-      results.push({ user: user.id, failed: sent.error });
-      continue;
-    }
+      // Claim the day before sending, not after. The insert is the idempotency
+      // guard (see the partial unique index in
+      // supabase/migrations/20260725210500_one_morning_checkin_per_day.sql):
+      // a second invocation — Vercel cron is at-least-once — loses the race
+      // here and sends nothing, instead of texting her twice.
+      const { data: claim, error: claimError } = await db
+        .from("checkins")
+        .insert({ user_id: user.id, message_text: text })
+        .select("id")
+        .single();
+      if (claimError) {
+        if (claimError.code === "23505") {
+          results.push({ user: user.id, skipped: "already_sent_today" });
+          continue;
+        }
+        throw new Error(`claim checkin: ${claimError.message}`);
+      }
 
-    if (snapshot) {
-      await db.from("weather").upsert(
-        {
-          user_id: user.id,
-          date: today,
-          pressure_hpa: snapshot.pressureHpa,
-          pressure_delta_24h: snapshot.pressureDelta24h,
-          temp_c: snapshot.tempC,
-          humidity: snapshot.humidity,
-        },
-        { onConflict: "user_id,date" },
-      );
+      const sent = await sendViaSendblue(user.phone, text);
+      if (!sent.ok) {
+        // Release the claim so a re-trigger can retry today rather than the
+        // failed attempt silently consuming her only message of the day.
+        await db.from("checkins").delete().eq("id", claim.id);
+        await audit("morning_send_failed", user.id, { error: sent.error });
+        results.push({ user: user.id, failed: sent.error });
+        continue;
+      }
+
+      // Weather is supporting detail, not the message — a failed upsert is
+      // worth surfacing but must not turn a delivered check-in into a failure.
+      let weatherStored: boolean | null = null;
+      if (snapshot) {
+        const { error: weatherError } = await db.from("weather").upsert(
+          {
+            user_id: user.id,
+            date: today,
+            pressure_hpa: snapshot.pressureHpa,
+            pressure_delta_24h: snapshot.pressureDelta24h,
+            temp_c: snapshot.tempC,
+            humidity: snapshot.humidity,
+          },
+          { onConflict: "user_id,date" },
+        );
+        weatherStored = !weatherError;
+        if (weatherError) {
+          console.error(`weather upsert (${user.id}): ${weatherError.message}`);
+        }
+      }
+
+      await audit("morning_sent", user.id, {
+        pressure_delta: snapshot?.pressureDelta24h ?? null,
+        weather_stored: weatherStored,
+      });
+      results.push({ user: user.id, sent: true, weather_stored: weatherStored });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`morning cron (${user.id}): ${message}`);
+      results.push({ user: user.id, failed: message });
     }
-    await db.from("checkins").insert({ user_id: user.id, message_text: text });
-    await audit("morning_sent", user.id, {
-      pressure_delta: snapshot?.pressureDelta24h ?? null,
-    });
-    results.push({ user: user.id, sent: true });
   }
 
   return NextResponse.json(

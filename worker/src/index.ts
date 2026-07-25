@@ -14,6 +14,7 @@ import {
 import {
   claimWebhookEvent,
   closeCheckinWithReply,
+  completeWebhookEvent,
   createAdHocCheckin,
   deleteUserData,
   findOrCreateUserByPhone,
@@ -28,10 +29,18 @@ import { normalizePhone, type User } from "./types";
 const app = new Hono<{ Bindings: Env }>();
 
 function log(fields: Record<string, unknown>): void {
-  // Structured, content-free-where-possible logs — audit_log carries the one
-  // deliberate full-text exception (needed to debug delivery during the
-  // hackathon build); drop it before real users are live.
+  // Structured and content-free: no message text reaches stdout.
   console.log(JSON.stringify(fields));
+}
+
+/**
+ * Message text for an audit payload. audit_log is insert-only (PRD §8) and
+ * erasure only nulls the user_id link, so raw inbound text written here
+ * survives a DELETE request — it is health data that outlives the right to
+ * erasure. Store a length instead, unless DEBUG_LOG_TEXT is explicitly on.
+ */
+function auditText(env: Env, text: string): Record<string, unknown> {
+  return env.DEBUG_LOG_TEXT === "1" ? { text } : { text_length: text.length };
 }
 
 app.get("/health", (c) => c.json({ ok: true, service: "homie-worker" }));
@@ -102,7 +111,7 @@ async function handleInboundMessage(
     if (isRedFlag(text)) {
       const audit = (async () => {
         const user = await findOrCreateUserByPhone(env, sender);
-        await insertAuditLog(env, user.id, "red_flag_bypass", { text });
+        await insertAuditLog(env, user.id, "red_flag_bypass", auditText(env, text));
       })().catch((err) => log({ event: "red_flag_audit_failed", error: String(err) }));
       const result = await sendblueAdapter.send(env, sender, { text: RED_FLAG_RESPONSE });
       log({ event: "red_flag_bypass", status: result.status });
@@ -122,6 +131,7 @@ async function handleInboundMessage(
       }
       const user = await findOrCreateUserByPhone(env, sender);
       await handleSafetyCommand(env, user, command, sender);
+      await completeWebhookEvent(env, dedupeKey);
       return;
     }
 
@@ -138,13 +148,14 @@ async function handleInboundMessage(
     }
 
     const user = await findOrCreateUserByPhone(env, sender);
-    const auditInbound = insertAuditLog(env, user.id, "inbound_received", { text }).catch((err) =>
+    const auditInbound = insertAuditLog(env, user.id, "inbound_received", auditText(env, text)).catch((err) =>
       log({ event: "audit_failed", user_id: user.id, error: String(err) })
     );
 
     if (user.status !== "active") {
       log({ event: "inbound_ignored", reason: "user_not_active", status: user.status, user_id: user.id });
       await auditInbound;
+      await completeWebhookEvent(env, dedupeKey);
       return;
     }
 
@@ -155,15 +166,42 @@ async function handleInboundMessage(
 
     const parsed = await parsePromise;
 
-    // Reply first, persist alongside.
-    const [result] = await Promise.all([
+    // The send is what she's actually waiting on, so it still starts alongside
+    // the observation write — but the two settle independently. Under
+    // Promise.all a failed observation insert rejected the whole step, which
+    // logged a reply that had already been delivered as inbound_reply_failed
+    // and skipped its reply_sent audit entry.
+    const [sendResult, persistResult] = await Promise.allSettled([
       sendblueAdapter.send(env, sender, { text: parsed.reply_text }),
       insertObservation(env, checkin.id, parsed),
-      auditInbound,
     ]);
+    await auditInbound;
 
-    await insertAuditLog(env, user.id, "reply_sent", { checkin_id: checkin.id, status: result.status });
-    log({ event: "inbound_reply_sent", user_id: user.id, checkin_id: checkin.id, status: result.status });
+    if (persistResult.status === "rejected") {
+      log({
+        event: "observation_persist_failed",
+        user_id: user.id,
+        checkin_id: checkin.id,
+        error: String(persistResult.reason),
+      });
+    }
+
+    // Only a failed send is worth a retry — rethrow so the claim's lease is
+    // left open for Sendblue's next attempt.
+    if (sendResult.status === "rejected") throw sendResult.reason;
+
+    await insertAuditLog(env, user.id, "reply_sent", {
+      checkin_id: checkin.id,
+      status: sendResult.value.status,
+      observation_persisted: persistResult.status === "fulfilled",
+    });
+    log({
+      event: "inbound_reply_sent",
+      user_id: user.id,
+      checkin_id: checkin.id,
+      status: sendResult.value.status,
+    });
+    await completeWebhookEvent(env, dedupeKey);
   } catch (err) {
     log({ event: "inbound_reply_failed", sender, error: err instanceof Error ? err.message : String(err) });
   }
@@ -171,10 +209,12 @@ async function handleInboundMessage(
 
 async function handleSafetyCommand(env: Env, user: User, command: SafetyCommand, sender: string): Promise<void> {
   if (command === "stop") {
-    await Promise.all([
-      setUserStatus(env, user.id, "stopped"),
-      sendblueAdapter.send(env, sender, { text: STOP_RESPONSE }),
-    ]);
+    // Strictly ordered, never raced: the confirmation is a promise that the
+    // messages have stopped. Running it alongside the status write meant a
+    // failed write could still be followed by "you're stopped" while the next
+    // morning cron, reading status 'active', texted her anyway.
+    await setUserStatus(env, user.id, "stopped");
+    await sendblueAdapter.send(env, sender, { text: STOP_RESPONSE });
     await insertAuditLog(env, user.id, "stop", {});
     log({ event: "safety_command", command, user_id: user.id });
     return;
@@ -182,22 +222,31 @@ async function handleSafetyCommand(env: Env, user: User, command: SafetyCommand,
 
   if (command === "delete") {
     const summary = await getDataSummary(env, user);
-    // Audit strictly before the delete: the row's user_id must still exist at
-    // insert time (it becomes NULL afterwards via ON DELETE SET NULL).
-    await Promise.all([
-      sendblueAdapter.send(env, sender, { text: DELETE_RESPONSE }),
-      insertAuditLog(env, user.id, "delete", { checkins_deleted: summary.checkins_count }),
-    ]);
+    // Erasure is the obligation here (PRD §7.3); the confirmation text is not.
+    // Audit strictly first — the row's user_id must still exist at insert time
+    // (it becomes NULL afterwards via ON DELETE SET NULL) — but neither a
+    // failed audit nor a failed send may skip the delete, which is what
+    // bundling them into Promise.all did: one rejection and deleteUserData
+    // never ran, leaving the data she asked us to erase in place.
+    try {
+      await insertAuditLog(env, user.id, "delete", { checkins_deleted: summary.checkins_count });
+    } catch (err) {
+      log({ event: "delete_audit_failed", user_id: user.id, error: String(err) });
+    }
     await deleteUserData(env, user.id);
     log({ event: "safety_command", command, user_id: user.id, checkins_deleted: summary.checkins_count });
+    await sendblueAdapter.send(env, sender, { text: DELETE_RESPONSE });
     return;
   }
 
   const summary = await getDataSummary(env, user);
-  await Promise.all([
-    sendblueAdapter.send(env, sender, { text: myDataResponseText(summary) }),
-    insertAuditLog(env, user.id, "my_data_request", {}),
-  ]);
+  // Her answer comes first; a failed audit write must not swallow it.
+  await sendblueAdapter.send(env, sender, { text: myDataResponseText(summary) });
+  try {
+    await insertAuditLog(env, user.id, "my_data_request", {});
+  } catch (err) {
+    log({ event: "my_data_audit_failed", user_id: user.id, error: String(err) });
+  }
   log({ event: "safety_command", command, user_id: user.id });
 }
 
@@ -246,7 +295,7 @@ app.post("/chat", async (c) => {
       c.executionCtx.waitUntil(
         (async () => {
           const user = await findOrCreateUserByPhone(c.env, sender);
-          await insertAuditLog(c.env, user.id, "red_flag_bypass", { text, channel: "web" });
+          await insertAuditLog(c.env, user.id, "red_flag_bypass", { ...auditText(c.env, text), channel: "web" });
         })().catch((err) => log({ event: "red_flag_audit_failed", channel: "web", error: String(err) }))
       );
       log({ event: "red_flag_bypass", channel: "web" });
@@ -263,12 +312,25 @@ app.post("/chat", async (c) => {
       }
       if (command === "delete") {
         const summary = await getDataSummary(c.env, user);
-        await insertAuditLog(c.env, user.id, "delete", { channel: "web", checkins_deleted: summary.checkins_count });
+        // Same contract as the SMS path: audit first so user_id still resolves,
+        // but never let a failed audit write cancel the erasure itself.
+        try {
+          await insertAuditLog(c.env, user.id, "delete", {
+            channel: "web",
+            checkins_deleted: summary.checkins_count,
+          });
+        } catch (err) {
+          log({ event: "delete_audit_failed", channel: "web", user_id: user.id, error: String(err) });
+        }
         await deleteUserData(c.env, user.id);
         return c.json({ reply: DELETE_RESPONSE });
       }
       const summary = await getDataSummary(c.env, user);
-      await insertAuditLog(c.env, user.id, "my_data_request", { channel: "web" });
+      try {
+        await insertAuditLog(c.env, user.id, "my_data_request", { channel: "web" });
+      } catch (err) {
+        log({ event: "my_data_audit_failed", channel: "web", user_id: user.id, error: String(err) });
+      }
       return c.json({ reply: myDataResponseText(summary) });
     }
 
@@ -280,9 +342,10 @@ app.post("/chat", async (c) => {
     if (user.status !== "active") {
       return c.json({ reply: "Homie is paused for this number. Text START from your phone to pick it back up." });
     }
-    const auditInbound = insertAuditLog(c.env, user.id, "inbound_received", { text, channel: "web" }).catch((err) =>
-      log({ event: "audit_failed", user_id: user.id, error: String(err) })
-    );
+    const auditInbound = insertAuditLog(c.env, user.id, "inbound_received", {
+      ...auditText(c.env, text),
+      channel: "web",
+    }).catch((err) => log({ event: "audit_failed", user_id: user.id, error: String(err) }));
 
     const open = await getOpenCheckin(c.env, user.id);
     const checkin = open

@@ -14,4 +14,13 @@ export interface Env {
 
   /** Required bearer token for POST /send-test. Route refuses if unset. */
   WORKER_ADMIN_TOKEN?: string;
+
+  /**
+   * Set to "1" to store raw inbound message text in audit_log. Off by default:
+   * that text is health data, and audit_log is insert-only (PRD §8) with
+   * erasure limited to dropping the user_id link, so anything written here
+   * outlives a DELETE request. Debugging aid only — never enable in an
+   * environment holding real users' messages.
+   */
+  DEBUG_LOG_TEXT?: string;
 }

@@ -46,15 +46,23 @@ export async function fetchPressure(): Promise<PressureSnapshot | null> {
     if (idx === -1) idx = Math.min(35, h.time.length - 1);
     const prev = idx - 24;
 
+    // Open-Meteo pads hours it has no data for with nulls, so every value has
+    // to be checked at idx — not just pressure. Previously a gap produced
+    // NaN temp/humidity, which serialises to null on the way into the weather
+    // table and quietly stored a row that looks like a real reading.
     const pressure = h.surface_pressure[idx];
     const before = prev >= 0 ? h.surface_pressure[prev] : pressure;
-    if (typeof pressure !== "number") return null;
+    const temp = h.temperature_2m?.[idx];
+    const humidity = h.relative_humidity_2m?.[idx];
+    if (![pressure, before, temp, humidity].every((v) => typeof v === "number" && Number.isFinite(v))) {
+      return null;
+    }
 
     return {
-      pressureHpa: round1(pressure),
-      pressureDelta24h: round1(pressure - before),
-      tempC: round1(h.temperature_2m?.[idx] ?? NaN),
-      humidity: round1(h.relative_humidity_2m?.[idx] ?? NaN),
+      pressureHpa: round1(pressure as number),
+      pressureDelta24h: round1((pressure as number) - (before as number)),
+      tempC: round1(temp as number),
+      humidity: round1(humidity as number),
     };
   } catch {
     return null;

@@ -93,5 +93,14 @@ export async function parseAndComposeReply(env: Env, replyText: string): Promise
   if (!result.finalOutput) {
     throw new Error("Homie reply parser produced no output");
   }
-  return result.finalOutput;
+
+  // confidence is defined as confidence in pain_level specifically, so it is
+  // meaningless without one. The instructions ask for 0 when pain_level is
+  // null, but an instruction is not a guarantee — normalise here so a stored
+  // observation can never claim 0.8 confidence in a score that doesn't exist.
+  // Enforced after the run rather than in ParsedReplySchema: the schema is
+  // handed to the SDK to derive the structured-output JSON schema, and a
+  // transform on it would not survive that round trip.
+  const parsed = result.finalOutput;
+  return parsed.pain_level === null ? { ...parsed, confidence: 0 } : parsed;
 }

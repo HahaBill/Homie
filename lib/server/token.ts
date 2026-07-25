@@ -21,7 +21,18 @@ function sign(payload: string): Buffer {
   return createHmac("sha256", secret()).update(payload).digest();
 }
 
+/** Hard ceiling on a link's lifetime, independent of what a caller asks for. */
+export const MAX_TTL_SECONDS = 7 * 24 * 60 * 60;
+
 export function mintToken(userId: string, ttlSeconds: number): string {
+  // A bearer credential's expiry is a security property, so it is validated
+  // at the point of signing rather than trusted from the caller. NaN would
+  // otherwise sign an exp of "NaN", which parses back to a malformed token,
+  // and a negative or absurd TTL would mint something already dead or
+  // effectively permanent.
+  if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds <= 0 || ttlSeconds > MAX_TTL_SECONDS) {
+    throw new RangeError(`ttlSeconds must be an integer in 1..${MAX_TTL_SECONDS}`);
+  }
   const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
   const payload = `${userId}.${exp}`;
   return `${b64url(Buffer.from(payload))}.${b64url(sign(payload))}`;
