@@ -3,3 +3,6 @@ homie-design-system
 Homie design system-handoff.zip
 Homie design system.pdf
 .DS_Store
+
+# Cloudflare Worker — deployed separately via .github/workflows/deploy-worker.yml
+worker
