@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="page">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#FFF4EC; -webkit-font-smoothing:antialiased; }
+  a { color:#D47A5A; text-decoration:none; }
+  a:hover { color:#B85F3F; }
+  ::selection { background:#F6DCCB; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; min-width:1360px; background:#FFF4EC; color:#2B2B2B; font-family:Inter, system-ui, sans-serif; display:grid; grid-template-columns:248px 1fr;">
+
+  <aside style="position:sticky; top:0; align-self:start; height:100vh; padding:40px 28px; box-sizing:border-box; border-right:1px solid #EADCCF; display:flex; flex-direction:column; gap:36px;">
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <img src="uploads/pasted-1784987587938-0.png" alt="Homie" style="width:76px; height:76px; border-radius:20px; object-fit:cover; display:block;">
+      <div style="font-family:'Baloo 2', cursive; font-size:26px; line-height:1; color:#D47A5A;">Homie</div>
+      <div style="font-size:12px; line-height:1.5; color:#8A7E75;">Design System v1.0<br>July 2026</div>
+    </div>
+    <nav style="display:flex; flex-direction:column; gap:2px;">
+      <a href="#brand" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">01</span>Brand</a>
+      <a href="#logo" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">02</span>Logo</a>
+      <a href="#color" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">03</span>Color</a>
+      <a href="#type" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">04</span>Type</a>
+      <a href="#foundations" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">05</span>Foundations</a>
+      <a href="#components" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">06</span>Components</a>
+      <a href="#voice" style="display:flex; gap:10px; font-size:13px; font-weight:500; color:#2B2B2B; padding:8px 10px; border-radius:8px;" style-hover="background:#F6DCCB"><span style="color:#B9A99C; font-family:'JetBrains Mono', monospace; font-size:11px;">07</span>Voice</a>
+    </nav>
+  </aside>
+
+  <main style="min-width:0;">
+
+    <!-- 01 BRAND -->
+    <section id="brand" data-screen-label="01 Brand" style="padding:96px 80px; border-bottom:1px solid #EADCCF;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">01</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Brand</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:72px; align-items:center;">
+        <div style="display:flex; flex-direction:column; gap:28px;">
+          <h1 style="margin:0; font-family:'Baloo 2', cursive; font-size:76px; line-height:0.95; color:#D47A5A; font-weight:700;">A gentle check-in.<br>When you need it.</h1>
+          <p style="margin:0; font-size:19px; line-height:1.6; color:#5C534C; max-width:52ch; text-wrap:pretty;">Homie is a mental-wellbeing companion that shows up quietly — on your phone, your watch, your glasses — and asks one honest question. No streaks. No pressure. Just a friend who checks in.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <span style="padding:8px 16px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Warm</span>
+            <span style="padding:8px 16px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Unhurried</span>
+            <span style="padding:8px 16px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Never clinical</span>
+            <span style="padding:8px 16px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">On your side</span>
+          </div>
+        </div>
+        <img src="uploads/pasted-1784987587938-0.png" alt="Homie logo" style="width:100%; border-radius:40px; display:block;">
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:72px;">
+        <div style="background:#FFFCF8; border:1px solid #EADCCF; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:22px; color:#D47A5A;">Ask, don't assess</div>
+          <p style="margin:0; font-size:14px; line-height:1.6; color:#5C534C;">Every surface opens with a question, not a score. Data collection is a side effect of care, never the point.</p>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #EADCCF; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:22px; color:#D47A5A;">One thing at a time</div>
+          <p style="margin:0; font-size:14px; line-height:1.6; color:#5C534C;">A screen holds a single decision. If it needs a second, it needs a second screen.</p>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #EADCCF; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:22px; color:#D47A5A;">Soft edges, clear exits</div>
+          <p style="margin:0; font-size:14px; line-height:1.6; color:#5C534C;">Rounded, low-contrast surfaces — but the way out and the way to help are always obvious.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 LOGO -->
+    <section id="logo" data-screen-label="02 Logo" style="padding:96px 80px; border-bottom:1px solid #EADCCF; background:#FFFCF8;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">02</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Logo</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:28px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#FFF4EC; border:1px solid #EADCCF; border-radius:20px; aspect-ratio:1; display:grid; place-items:center; padding:18px; box-sizing:border-box;">
+            <img src="uploads/pasted-1784987587938-0.png" alt="Primary logo" style="width:100%; border-radius:16px; display:block;">
+          </div>
+          <div style="font-size:13px; font-weight:600;">Primary lockup</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Default everywhere there is room. Wordmark arcs over the mark.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#FFF4EC; border:1px solid #EADCCF; border-radius:20px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; gap:16px; padding:24px; box-sizing:border-box;">
+            <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:64px; height:64px; border-radius:16px; object-fit:cover; display:block;">
+            <div style="font-family:'Baloo 2', cursive; font-size:40px; color:#D47A5A; line-height:1;">Homie</div>
+          </div>
+          <div style="font-size:13px; font-weight:600;">Horizontal lockup</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">App headers, email signatures, partner pages.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#FFF4EC; border:1px solid #EADCCF; border-radius:20px; aspect-ratio:1; display:grid; place-items:center; padding:24px; box-sizing:border-box;">
+            <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:100%; border-radius:50%; display:block; border:1px solid #EADCCF;">
+          </div>
+          <div style="font-size:13px; font-weight:600;">Circular badge</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Avatars, watch faces, social profiles.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#2B2B2B; border-radius:20px; aspect-ratio:1; display:grid; place-items:center; padding:24px; box-sizing:border-box;">
+            <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:100%; border-radius:24px; display:block;">
+          </div>
+          <div style="font-size:13px; font-weight:600;">On dark</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Keep the cream tile — never knock the mark out to a silhouette.</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:56px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:20px;">CLEAR SPACE &amp; MINIMUM SIZE</div>
+          <div style="display:flex; gap:32px; align-items:center;">
+            <div style="padding:26px; border:1px dashed #D4A58A; border-radius:24px;">
+              <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:104px; height:104px; border-radius:22px; object-fit:cover; display:block;">
+            </div>
+            <div style="font-size:14px; line-height:1.7; color:#5C534C;">Clear space on all sides = <strong>¼ the mark's width</strong>. Minimum size: 32&nbsp;px digital, 12&nbsp;mm print. Below 40&nbsp;px, drop the wordmark and use the face tile alone.</div>
+          </div>
+        </div>
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:20px;">DON'T</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px; line-height:1.6; color:#5C534C;">
+            <div>— Recolour the wordmark outside Terracotta or Charcoal.</div>
+            <div>— Rotate, skew, or re-arc the letters.</div>
+            <div>— Place the mark on a photograph without the cream tile.</div>
+            <div>— Add drop shadows, outlines, or gradients.</div>
+            <div>— Swap the face for another portrait or emoji.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 COLOR -->
+    <section id="color" data-screen-label="03 Color" style="padding:96px 80px; border-bottom:1px solid #EADCCF;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">03</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Color</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:24px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="height:150px; border-radius:18px; background:#FFF4EC; border:1px solid #EADCCF;"></div>
+          <div style="font-size:15px; font-weight:600;">Warm Cream</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">#FFF4EC</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">App canvas. 70% of every screen.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="height:150px; border-radius:18px; background:#D47A5A;"></div>
+          <div style="font-size:15px; font-weight:600;">Terracotta Clay</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">#D47A5A</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Primary action, wordmark, active tab.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="height:150px; border-radius:18px; background:#F6DCCB;"></div>
+          <div style="font-size:15px; font-weight:600;">Soft Peach</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">#F6DCCB</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Tiles, chips, selected states.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="height:150px; border-radius:18px; background:#2B2B2B;"></div>
+          <div style="font-size:15px; font-weight:600;">Charcoal</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">#2B2B2B</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Body text, watch &amp; glasses surfaces.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="height:150px; border-radius:18px; background:#E8DCC9;"></div>
+          <div style="font-size:15px; font-weight:600;">Muted Beige</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">#E8DCC9</div>
+          <div style="font-size:12px; color:#8A7E75; line-height:1.5;">Dividers, disabled, quiet fills.</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:28px; margin-top:56px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:22px;">MOOD ACCENTS — TINTS ONLY, NEVER AS BUTTONS</div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+            <div style="border-radius:14px; background:#E7EFE3; padding:18px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:14px; font-weight:600;">Okay</div>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#6C7A66;">#E7EFE3</div>
+            </div>
+            <div style="border-radius:14px; background:#E4EBF2; padding:18px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:14px; font-weight:600;">Tough</div>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#66717C;">#E4EBF2</div>
+            </div>
+            <div style="border-radius:14px; background:#EDE4F2; padding:18px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:14px; font-weight:600;">Support</div>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#77687F;">#EDE4F2</div>
+            </div>
+            <div style="border-radius:14px; background:#F2EDE4; padding:18px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:14px; font-weight:600;">Neutral</div>
+              <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#7D7468;">#F2EDE4</div>
+            </div>
+          </div>
+        </div>
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8; display:flex; flex-direction:column; gap:14px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75;">CONTRAST</div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; color:#5C534C; border-bottom:1px solid #EADCCF; padding-bottom:10px;"><span>Charcoal on Cream</span><span style="font-weight:600; color:#2B2B2B;">14.2 : 1 &nbsp;AAA</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; color:#5C534C; border-bottom:1px solid #EADCCF; padding-bottom:10px;"><span>Cream on Terracotta</span><span style="font-weight:600; color:#2B2B2B;">4.7 : 1 &nbsp;AA</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; color:#5C534C;"><span>Terracotta on Cream</span><span style="font-weight:600; color:#B85F3F;">4.4 : 1 &nbsp;AA large</span></div>
+          <div style="font-size:13px; color:#8A7E75; line-height:1.6; margin-top:6px;">Terracotta text only at 18&nbsp;px+ / 600 weight. For body copy use Charcoal.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 TYPE -->
+    <section id="type" data-screen-label="04 Type" style="padding:96px 80px; border-bottom:1px solid #EADCCF; background:#FFFCF8;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">04</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Type</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:96px; line-height:1; color:#D47A5A;">Homie</div>
+          <div style="font-size:16px; font-weight:600;">Baloo 2 — Display / Wordmark</div>
+          <div style="font-size:14px; color:#5C534C; line-height:1.7;">Friendly, rounded, warm. Used for the wordmark, greetings, and empty-state headlines only. Never for body copy, never below 20&nbsp;px, never all-caps.</div>
+          <div style="font-family:'Baloo 2', cursive; font-size:22px; color:#2B2B2B; line-height:1.5;">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm<br>Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz<br>1234567890</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="font-size:96px; line-height:1; font-weight:600; letter-spacing:-0.03em;">Inter</div>
+          <div style="font-size:16px; font-weight:600;">Inter — Interface</div>
+          <div style="font-size:14px; color:#5C534C; line-height:1.7;">Clean, readable, supportive. Everything the user reads to make a decision. Weights 400 / 500 / 600 only.</div>
+          <div style="font-size:22px; color:#2B2B2B; line-height:1.5;">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm<br>Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz<br>1234567890</div>
+        </div>
+      </div>
+
+      <div style="margin-top:64px; border:1px solid #EADCCF; border-radius:20px; overflow:hidden;">
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:16px 28px; background:#F6DCCB; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.14em; color:#7A5D4C;">
+          <div>TOKEN</div><div>SPECIMEN</div><div>SIZE / LH / WEIGHT</div>
+        </div>
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:22px 28px; align-items:center; border-top:1px solid #EADCCF; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">display/greeting</div>
+          <div style="font-family:'Baloo 2', cursive; font-size:34px; color:#2B2B2B; line-height:1.1;">Hey, I'm here.</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">34 / 38 / 600 · Baloo 2</div>
+        </div>
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:22px 28px; align-items:center; border-top:1px solid #EADCCF; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">title/lg</div>
+          <div style="font-size:24px; font-weight:600; line-height:1.25;">How are you feeling today?</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">24 / 30 / 600 · Inter</div>
+        </div>
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:22px 28px; align-items:center; border-top:1px solid #EADCCF; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">body/md</div>
+          <div style="font-size:16px; line-height:1.55;">Nothing you say here leaves your device unless you send it.</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">16 / 25 / 400 · Inter</div>
+        </div>
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:22px 28px; align-items:center; border-top:1px solid #EADCCF; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">body/sm</div>
+          <div style="font-size:14px; line-height:1.5; color:#5C534C;">Just having a normal day.</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">14 / 21 / 400 · Inter</div>
+        </div>
+        <div style="display:grid; grid-template-columns:180px 1fr 220px; gap:24px; padding:22px 28px; align-items:center; border-top:1px solid #EADCCF; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">label/caps</div>
+          <div style="font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#8A7E75;">Yesterday</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75;">12 / 16 / 600 · Inter</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 FOUNDATIONS -->
+    <section id="foundations" data-screen-label="05 Foundations" style="padding:96px 80px; border-bottom:1px solid #EADCCF;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">05</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Foundations</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">SPACING — 4 PT BASE</div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">xs 4</span><div style="height:14px; width:4px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">sm 8</span><div style="height:14px; width:8px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">md 12</span><div style="height:14px; width:12px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">lg 16</span><div style="height:14px; width:16px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">xl 24</span><div style="height:14px; width:24px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">2xl 32</span><div style="height:14px; width:32px; background:#D47A5A; border-radius:2px;"></div></div>
+            <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#8A7E75; width:60px;">3xl 48</span><div style="height:14px; width:48px; background:#D47A5A; border-radius:2px;"></div></div>
+          </div>
+          <div style="font-size:13px; color:#8A7E75; line-height:1.6; margin-top:22px;">Screen gutter 20&nbsp;px. Card padding 16&nbsp;px. Vertical rhythm between blocks 24&nbsp;px.</div>
+        </div>
+
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">RADIUS &amp; ELEVATION</div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:26px;">
+            <div style="width:88px; height:88px; background:#F6DCCB; border-radius:8px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">8</div>
+            <div style="width:88px; height:88px; background:#F6DCCB; border-radius:14px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">14</div>
+            <div style="width:88px; height:88px; background:#F6DCCB; border-radius:22px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">22</div>
+            <div style="width:88px; height:88px; background:#F6DCCB; border-radius:999px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">full</div>
+          </div>
+          <div style="display:flex; gap:16px;">
+            <div style="flex:1; height:74px; background:#FFF4EC; border:1px solid #EADCCF; border-radius:16px; display:grid; place-items:center; font-size:12px; color:#8A7E75;">flat — default</div>
+            <div style="flex:1; height:74px; background:#FFF4EC; border-radius:16px; box-shadow:0 2px 8px rgba(43,43,43,0.06); display:grid; place-items:center; font-size:12px; color:#8A7E75;">raised — sheets</div>
+            <div style="flex:1; height:74px; background:#FFF4EC; border-radius:16px; box-shadow:0 12px 32px rgba(43,43,43,0.12); display:grid; place-items:center; font-size:12px; color:#8A7E75;">overlay — modals</div>
+          </div>
+          <div style="font-size:13px; color:#8A7E75; line-height:1.6; margin-top:22px;">Shadows stay warm-neutral and low. No coloured glows.</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:28px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:18px;">MOTION</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px; color:#5C534C; line-height:1.6;">
+            <div><strong style="color:#2B2B2B;">Enter</strong> 240&nbsp;ms · cubic-bezier(.2,.8,.2,1)</div>
+            <div><strong style="color:#2B2B2B;">Exit</strong> 160&nbsp;ms · ease-in</div>
+            <div><strong style="color:#2B2B2B;">Breath</strong> 4&nbsp;s loop for waiting states</div>
+            <div style="color:#8A7E75;">Nothing bounces. Nothing flashes. Honour reduced-motion.</div>
+          </div>
+        </div>
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:18px;">TOUCH &amp; A11Y</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px; color:#5C534C; line-height:1.6;">
+            <div>Minimum hit target <strong style="color:#2B2B2B;">44 × 44&nbsp;px</strong></div>
+            <div>Focus ring: 2&nbsp;px Terracotta, 2&nbsp;px offset</div>
+            <div>Body text never below 14&nbsp;px</div>
+            <div>Every mood tile carries a text label — colour is never the only signal</div>
+          </div>
+        </div>
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFFCF8;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:18px;">SURFACES</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px; color:#5C534C; line-height:1.6;">
+            <div><strong style="color:#2B2B2B;">Phone</strong> cream canvas, full component set</div>
+            <div><strong style="color:#2B2B2B;">Watch</strong> charcoal canvas, one action max</div>
+            <div><strong style="color:#2B2B2B;">Glasses</strong> voice-first, wordmark only on the temple</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 COMPONENTS -->
+    <section id="components" data-screen-label="06 Components" style="padding:96px 80px; border-bottom:1px solid #EADCCF; background:#FFFCF8;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">06</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Components</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-bottom:28px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">BUTTONS</div>
+          <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">
+            <button style="font-family:Inter, sans-serif; font-size:16px; font-weight:600; color:#FFF4EC; background:#D47A5A; border:none; border-radius:999px; padding:14px 28px; cursor:pointer;" style-hover="background:#B85F3F">Tap to check in</button>
+            <button style="font-family:Inter, sans-serif; font-size:16px; font-weight:600; color:#2B2B2B; background:#F6DCCB; border:none; border-radius:999px; padding:14px 28px; cursor:pointer;" style-hover="background:#EFCCB4">Maybe later</button>
+            <button style="font-family:Inter, sans-serif; font-size:16px; font-weight:500; color:#D47A5A; background:transparent; border:1.5px solid #D47A5A; border-radius:999px; padding:13px 26px; cursor:pointer;" style-hover="background:#F6DCCB">Learn more</button>
+            <button style="font-family:Inter, sans-serif; font-size:16px; font-weight:600; color:#B9A99C; background:#E8DCC9; border:none; border-radius:999px; padding:14px 28px;">Disabled</button>
+          </div>
+          <div style="font-size:13px; color:#8A7E75; line-height:1.6; margin-top:22px;">One primary per screen. Labels are verbs in the user's voice, sentence case, no full stop.</div>
+        </div>
+
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">MOOD TILES</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:14px; background:#E7EFE3; border-radius:14px; padding:14px 16px; cursor:pointer;" style-hover="filter:brightness(0.98)">
+              <div style="width:34px; height:34px; border-radius:50%; background:#FFFCF8; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:600;">I'm doing okay</div><div style="font-size:13px; color:#5C534C;">Just having a normal day.</div></div>
+              <div style="color:#8A7E75; font-size:18px;">›</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px; background:#E4EBF2; border-radius:14px; padding:14px 16px; cursor:pointer;" style-hover="filter:brightness(0.98)">
+              <div style="width:34px; height:34px; border-radius:50%; background:#FFFCF8; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:600;">I'm having a tough day</div><div style="font-size:13px; color:#5C534C;">Things feel a bit hard.</div></div>
+              <div style="color:#8A7E75; font-size:18px;">›</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px; background:#EDE4F2; border-radius:14px; padding:14px 16px; cursor:pointer; outline:2px solid #D47A5A; outline-offset:2px;">
+              <div style="width:34px; height:34px; border-radius:50%; background:#FFFCF8; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:600;">I need support</div><div style="font-size:13px; color:#5C534C;">I could use someone right now.</div></div>
+              <div style="color:#8A7E75; font-size:18px;">›</div>
+            </div>
+          </div>
+          <div style="font-size:13px; color:#8A7E75; line-height:1.6; margin-top:18px;">Selected = Terracotta focus ring, never a colour swap.</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:340px 1fr; gap:28px; align-items:start;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">APP SHELL — PHONE</div>
+          <div style="background:#2B2B2B; border-radius:38px; padding:9px;">
+            <div style="background:#FFF4EC; border-radius:30px; overflow:hidden;">
+              <div style="display:flex; justify-content:space-between; padding:12px 20px 6px; font-size:12px; font-weight:600;"><span>9:41</span><span style="color:#8A7E75;">▮▮▮</span></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px 18px;">
+                <div style="font-family:'Baloo 2', cursive; font-size:27px; font-weight:700; color:#D47A5A; line-height:1;">Homie</div>
+                <div style="display:flex; align-items:center; gap:9px;">
+                  <div style="width:24px; height:24px; border-radius:50%; background:#FFFCF8; display:grid; place-items:center; font-family:Nunito, sans-serif; font-size:12px; font-weight:800; color:#5C534C;">i</div>
+                  <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:26px; height:26px; border-radius:50%; object-fit:cover; object-position:50% 62%;">
+                </div>
+              </div>
+              <div style="padding:0 18px 18px;">
+                <div style="font-family:Nunito, sans-serif; font-weight:800; font-size:24px; line-height:1.2; letter-spacing:-0.01em; color:#2B2B2B;">Hey, I'm here.</div>
+                <div style="font-family:Nunito, sans-serif; font-weight:700; font-size:15px; line-height:1.3; color:#2B2B2B; margin:6px 0 16px;">How are you feeling today?</div>
+                <div style="display:flex; flex-direction:column; gap:8px; font-family:Nunito, sans-serif;">
+                  <div style="background:#E7EFE3; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I'm doing okay</div>
+                  <div style="background:#E4EBF2; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I'm having a tough day</div>
+                  <div style="background:#EDE4F2; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I need support</div>
+                  <div style="background:#F2EDE4; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">Just checking in</div>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid #EADCCF; padding:10px 0 16px; text-align:center; font-family:Nunito, sans-serif; font-size:10px; font-weight:700; color:#8A7E75;">
+                <div style="color:#D47A5A;">Check-in</div><div>History</div><div>Tools</div><div>Profile</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:28px;">
+          <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+            <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">NOTIFICATION — WATCH &amp; LOCK SCREEN</div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap;">
+              <div style="width:250px; background:#2B2B2B; border-radius:26px; padding:18px; color:#FFF4EC;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                  <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover; object-position:50% 62%;">
+                  <span style="font-size:11px; letter-spacing:0.14em; color:#B9A99C;">HOMIE</span>
+                  <span style="margin-left:auto; font-size:11px; color:#B9A99C;">9:41</span>
+                </div>
+                <div style="font-size:16px; font-weight:600; line-height:1.35; margin-bottom:14px;">Hey, just checking in. How are you feeling?</div>
+                <div style="background:#D47A5A; border-radius:999px; padding:11px; text-align:center; font-size:14px; font-weight:600;">Tap to check in</div>
+                <div style="font-size:12px; color:#B9A99C; margin-top:10px; text-align:center;">You're not alone.</div>
+              </div>
+              <div style="flex:1; min-width:220px; display:flex; flex-direction:column; gap:12px; font-size:14px; color:#5C534C; line-height:1.65;">
+                <div><strong style="color:#2B2B2B;">Charcoal surface</strong> on wearables — cream is reserved for the phone canvas.</div>
+                <div><strong style="color:#2B2B2B;">One action.</strong> A watch notification never offers a second button.</div>
+                <div><strong style="color:#2B2B2B;">Max one nudge a day</strong>, and never between 22:00 and 08:00 unless the user asked for it.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #EADCCF; border-radius:20px; padding:32px; background:#FFF4EC;">
+            <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A7E75; margin-bottom:24px;">CHIPS, INPUT &amp; DIVIDER</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+              <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Sleep</span>
+              <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Work</span>
+              <span style="padding:8px 15px; border-radius:999px; background:#D47A5A; color:#FFF4EC; font-size:13px; font-weight:600;">People</span>
+              <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:500;">Money</span>
+              <span style="padding:8px 15px; border-radius:999px; border:1.5px dashed #D4A58A; font-size:13px; font-weight:500; color:#8A7E75;">+ Add</span>
+            </div>
+            <div style="background:#FFFCF8; border:1px solid #EADCCF; border-radius:14px; padding:14px 16px; font-size:15px; color:#B9A99C;">Say as much or as little as you like…</div>
+            <div style="height:1px; background:#E8DCC9; margin:20px 0;"></div>
+            <div style="font-size:13px; color:#8A7E75;">Inputs are never required. Empty is a valid answer.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 VOICE -->
+    <section id="voice" data-screen-label="07 Voice" style="padding:96px 80px 120px;">
+      <div style="display:flex; gap:14px; align-items:baseline; margin-bottom:56px;">
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#D47A5A; letter-spacing:0.08em;">07</span>
+        <span style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#8A7E75; letter-spacing:0.18em; text-transform:uppercase;">Voice</span>
+      </div>
+
+      <div style="font-family:'Baloo 2', cursive; font-size:52px; line-height:1.15; color:#D47A5A; max-width:20ch; margin-bottom:48px;">Talk like a friend, not a form.</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-bottom:28px;">
+        <div style="border:1px solid #EADCCF; border-radius:20px; overflow:hidden; background:#FFFCF8;">
+          <div style="padding:14px 28px; background:#E7EFE3; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#4F6247;">WE SAY</div>
+          <div style="padding:28px; display:flex; flex-direction:column; gap:16px; font-size:16px; line-height:1.5;">
+            <div>“Hey, just checking in.”</div>
+            <div>“That sounds heavy. Want to talk about it?”</div>
+            <div>“No rush — I'll be here later.”</div>
+            <div>“Thanks for telling me.”</div>
+          </div>
+        </div>
+        <div style="border:1px solid #EADCCF; border-radius:20px; overflow:hidden; background:#FFFCF8;">
+          <div style="padding:14px 28px; background:#F2E4E0; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A5140;">WE DON'T</div>
+          <div style="padding:28px; display:flex; flex-direction:column; gap:16px; font-size:16px; line-height:1.5; color:#8A7E75;">
+            <div>“Complete your daily wellness assessment.”</div>
+            <div>“Your mood score dropped 12% this week.”</div>
+            <div>“You've broken your 7-day streak!”</div>
+            <div>“Logged successfully.”</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:24px;">
+        <div style="background:#F6DCCB; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:20px;">Short sentences</div>
+          <div style="font-size:14px; line-height:1.6; color:#5C534C;">Under 12 words on a phone. Under 8 on a watch.</div>
+        </div>
+        <div style="background:#F6DCCB; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:20px;">No diagnosis</div>
+          <div style="font-size:14px; line-height:1.6; color:#5C534C;">Homie never names a condition or gives medical advice.</div>
+        </div>
+        <div style="background:#F6DCCB; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:20px;">Always an exit</div>
+          <div style="font-size:14px; line-height:1.6; color:#5C534C;">“Not now” is offered as often as “Yes”.</div>
+        </div>
+        <div style="background:#2B2B2B; color:#FFF4EC; border-radius:20px; padding:28px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Baloo 2', cursive; font-size:20px;">Crisis language</div>
+          <div style="font-size:14px; line-height:1.6; color:#D8CCC2;">Direct, calm, no metaphors: “I can connect you with someone now.” Human help is one tap away.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:72px; padding-top:32px; border-top:1px solid #EADCCF; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#8A7E75;">
+        <span>Homie Design System · v1.0</span>
+        <span style="font-family:'Baloo 2', cursive; font-size:20px; color:#D47A5A;">A gentle check-in. When you need it.</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="page">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#FFF4EC; -webkit-font-smoothing:antialiased; }
+  a { color:#D47A5A; text-decoration:none; }
+  a:hover { color:#B85F3F; }
+  ::selection { background:#F6DCCB; color:#2B2B2B; }
+</style>
+</helmet>
+
+<div style="min-width:1360px; background:#FFF4EC; color:#2B2B2B; font-family:Nunito, system-ui, sans-serif; padding:0 0 96px;">
+
+  <header style="position:sticky; top:0; z-index:20; background:rgba(255,244,236,0.92); backdrop-filter:blur(12px); border-bottom:1px solid #E8DCC9; padding:16px 48px; display:flex; align-items:center; gap:28px;">
+    <img src="uploads/pasted-1784987587938-0.png" alt="Homie" style="width:36px; height:36px; border-radius:11px; object-fit:cover; object-position:50% 62%;">
+    <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:22px; color:#D47A5A; line-height:1;">Homie</div>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#A2907F;">CORE COLORWAY · V2.0</div>
+    <nav style="margin-left:auto; display:flex; gap:4px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em;">
+      <a href="#v-brand" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">01 BRAND</a>
+      <a href="#v-logo" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">02 LOGO</a>
+      <a href="#v-color" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">03 COLOR</a>
+      <a href="#v-type" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">04 TYPE</a>
+      <a href="#v-found" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">05 FOUNDATIONS</a>
+      <a href="#v-comp" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">06 COMPONENTS</a>
+      <a href="#v-voice" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">07 VOICE</a>
+      <a href="#v-channels" style="padding:8px 12px; border-radius:8px; color:#7A6B5E;" style-hover="background:#F6DCCB; color:#2B2B2B">08 CHANNELS</a>
+    </nav>
+  </header>
+
+  <!-- 01 BRAND -->
+  <section id="v-brand" data-screen-label="01 Brand" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">01</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Brand</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:20px;">
+      <div style="background:#F6DCCB; border-radius:26px; padding:56px; display:flex; flex-direction:column; gap:26px; justify-content:center;">
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:64px; line-height:1.05; color:#2B2B2B;">A gentle check-in.<br><span style="color:#D47A5A;">When you need it.</span></div>
+        <p style="margin:0; font-size:18px; line-height:1.65; color:#6B5C50; max-width:56ch;">Homie is a wellbeing companion that shows up quietly — phone, watch, glasses — and asks one honest question. Warm cream is the canvas, terracotta is the only thing that ever asks to be tapped.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <span style="padding:8px 16px; border-radius:999px; background:#FFF4EC; font-size:13px; font-weight:700;">Warm</span>
+          <span style="padding:8px 16px; border-radius:999px; background:#FFF4EC; font-size:13px; font-weight:700;">Unhurried</span>
+          <span style="padding:8px 16px; border-radius:999px; background:#FFF4EC; font-size:13px; font-weight:700;">Never clinical</span>
+          <span style="padding:8px 16px; border-radius:999px; background:#FFF4EC; font-size:13px; font-weight:700;">On your side</span>
+        </div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:26px; padding:40px; display:grid; place-items:center;">
+        <img src="uploads/pasted-1784987587938-0.png" alt="Homie logo" style="width:100%; max-width:320px; border-radius:32px; display:block;">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A;">PRINCIPLE 01</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:24px;">Ask, don't assess</div>
+        <p style="margin:0; font-size:15px; line-height:1.6; color:#6B5C50;">Every surface opens with a question, not a score. Data is a side effect of care, never the point.</p>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A;">PRINCIPLE 02</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:24px;">One thing at a time</div>
+        <p style="margin:0; font-size:15px; line-height:1.6; color:#6B5C50;">A screen holds a single decision. If it needs a second, it needs a second screen.</p>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A;">PRINCIPLE 03</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:24px;">Soft edges, clear exits</div>
+        <p style="margin:0; font-size:15px; line-height:1.6; color:#6B5C50;">Low-contrast, rounded surfaces — but the way out and the way to help are always obvious.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 LOGO -->
+  <section id="v-logo" data-screen-label="02 Logo" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">02</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Logo</h2>
+    </div>
+
+    <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:26px; padding:56px; display:flex; align-items:center; gap:56px;">
+      <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:200px; height:200px; border-radius:44px; object-fit:cover; flex:none;">
+      <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:104px; line-height:1; color:#2B2B2B;">Ho<span style="color:#D47A5A;">mie</span><span style="color:#D47A5A;">.</span></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
+      <div style="background:#F6DCCB; border-radius:22px; padding:36px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B85F3F; margin-bottom:26px;">PRIMARY · ON PEACH</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:60px; line-height:1;">Ho<span style="color:#D47A5A;">mie</span></div>
+        <p style="margin:22px 0 0; font-size:15px; line-height:1.65; color:#6B5C50;">The lead treatment: <strong style="color:#2B2B2B;">Ho</strong> charcoal, <strong style="color:#B85F3F;">mie</strong> terracotta clay. Peach is the only tinted surface it sits on.</p>
+      </div>
+      <div style="background:#2B2B2B; border-radius:22px; padding:36px; color:#FFF4EC;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#E8A98D; margin-bottom:26px;">REVERSED · CHARCOAL</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:60px; line-height:1;">Ho<span style="color:#E8A98D;">mie</span></div>
+        <p style="margin:22px 0 0; font-size:15px; line-height:1.65; color:#C7BBB1;">On charcoal (wearables, video) the clay lightens to <strong style="color:#E8A98D;">#E8A98D</strong> so it clears AA. Never place raw #D47A5A text on charcoal.</p>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">CLEAR SPACE</div>
+        <div style="display:inline-flex; align-items:center; gap:14px; padding:20px; border:1.5px dashed #D4A58A; border-radius:20px;">
+          <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:52px; height:52px; border-radius:15px; object-fit:cover; object-position:50% 62%;">
+          <span style="font-family:Fredoka, sans-serif; font-weight:600; font-size:28px;">Ho<span style="color:#D47A5A;">mie</span></span>
+        </div>
+        <p style="margin:22px 0 0; font-size:15px; line-height:1.65; color:#6B5C50;">Clear space equals one head-height around the lockup.</p>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">APP ICON · SIZES</div>
+        <div style="display:flex; align-items:flex-end; gap:16px;">
+          <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:88px; height:88px; border-radius:22px; object-fit:cover;">
+          <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:58px; height:58px; border-radius:15px; object-fit:cover; object-position:50% 62%;">
+          <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:36px; height:36px; border-radius:10px; object-fit:cover; object-position:50% 62%;">
+        </div>
+        <p style="margin:22px 0 0; font-size:15px; line-height:1.65; color:#6B5C50;">Cream tile always stays. Below 40&nbsp;px the wordmark drops and the face crops to the head.</p>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B85F3F; margin-bottom:24px;">DON'T</div>
+        <div style="display:flex; flex-direction:column; gap:12px; font-size:15px; line-height:1.55; color:#6B5C50;">
+          <div>— Set terracotta body text on cream — it's AA large only</div>
+          <div>— Knock the face out to a silhouette</div>
+          <div>— Re-arc, rotate, or outline the wordmark</div>
+          <div>— Set the wordmark in anything but Homie Display</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 COLOR -->
+  <section id="v-color" data-screen-label="03 Color" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">03</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Color</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="height:132px; border-radius:16px; background:#FFF4EC; border:1px solid #E8DCC9;"></div>
+        <div style="font-size:16px; font-weight:800;">Warm Cream</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">#FFF4EC</div>
+        <div style="font-size:13px; color:#6B5C50; line-height:1.5;">Canvas. 70% of every screen.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="height:132px; border-radius:16px; background:#D47A5A;"></div>
+        <div style="font-size:16px; font-weight:800;">Terracotta Clay</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">#D47A5A</div>
+        <div style="font-size:13px; color:#6B5C50; line-height:1.5;">Primary action, wordmark, active tab.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="height:132px; border-radius:16px; background:#F6DCCB;"></div>
+        <div style="font-size:16px; font-weight:800;">Soft Peach</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">#F6DCCB</div>
+        <div style="font-size:13px; color:#6B5C50; line-height:1.5;">Feature panels, chips, selected states.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="height:132px; border-radius:16px; background:#2B2B2B;"></div>
+        <div style="font-size:16px; font-weight:800;">Charcoal</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">#2B2B2B</div>
+        <div style="font-size:13px; color:#6B5C50; line-height:1.5;">Body text, watch &amp; glasses surfaces.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:24px; display:flex; flex-direction:column; gap:14px;">
+        <div style="height:132px; border-radius:16px; background:#E8DCC9;"></div>
+        <div style="font-size:16px; font-weight:800;">Muted Beige</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">#E8DCC9</div>
+        <div style="font-size:13px; color:#6B5C50; line-height:1.5;">Dividers, disabled, quiet fills.</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:20px; margin-top:20px;">
+      <div style="background:#F6DCCB; border-radius:22px; padding:36px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B85F3F; margin-bottom:24px;">RATIO · HOW THE THREE MAIN COLORS SHARE A SCREEN</div>
+        <div style="display:flex; height:64px; border-radius:14px; overflow:hidden; font-size:13px; font-weight:800;">
+          <div style="flex:70; background:#FFF4EC; display:grid; place-items:center; color:#6B5C50;">Warm Cream · 70%</div>
+          <div style="flex:22; background:#F6DCCB; display:grid; place-items:center; color:#6B5C50; border-left:1px solid #E8DCC9;">Peach · 22%</div>
+          <div style="flex:8; background:#D47A5A; display:grid; place-items:center; color:#FFF4EC;">Clay · 8%</div>
+        </div>
+        <p style="margin:24px 0 0; font-size:15px; line-height:1.65; color:#6B5C50;">Terracotta never exceeds ~8% of a screen — it marks the one thing worth tapping. Peach carries grouping; cream carries everything else. Charcoal and beige are structure, not colour.</p>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px; display:flex; flex-direction:column; gap:14px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A;">CONTRAST</div>
+        <div style="display:flex; justify-content:space-between; font-size:15px; color:#6B5C50; border-bottom:1px solid #E8DCC9; padding-bottom:12px;"><span>Charcoal on Cream</span><span style="font-weight:800; color:#2B2B2B;">14.2 : 1 AAA</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:15px; color:#6B5C50; border-bottom:1px solid #E8DCC9; padding-bottom:12px;"><span>Charcoal on Peach</span><span style="font-weight:800; color:#2B2B2B;">12.6 : 1 AAA</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:15px; color:#6B5C50; border-bottom:1px solid #E8DCC9; padding-bottom:12px;"><span>Cream on Clay</span><span style="font-weight:800; color:#B85F3F;">4.7 : 1 AA</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:15px; color:#6B5C50;"><span>Clay on Cream</span><span style="font-weight:800; color:#B85F3F;">4.4 : 1 AA large</span></div>
+        <p style="margin:8px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">Terracotta text only at 18&nbsp;px+ / 700 weight. For body copy use charcoal.</p>
+      </div>
+    </div>
+
+    <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px; margin-top:20px;">
+      <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">MOOD TINTS · SURFACES ONLY, NEVER BUTTONS OR TEXT</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+        <div style="border-radius:16px; background:#E7EFE3; padding:20px; display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:15px; font-weight:800;">Okay</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#6C7A66;">#E7EFE3</div>
+        </div>
+        <div style="border-radius:16px; background:#E4EBF2; padding:20px; display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:15px; font-weight:800;">Tough</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#66717C;">#E4EBF2</div>
+        </div>
+        <div style="border-radius:16px; background:#EDE4F2; padding:20px; display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:15px; font-weight:800;">Support</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#77687F;">#EDE4F2</div>
+        </div>
+        <div style="border-radius:16px; background:#F2EDE4; padding:20px; display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:15px; font-weight:800;">Neutral</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#7D7468;">#F2EDE4</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 TYPE -->
+  <section id="v-type" data-screen-label="04 Type" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">04</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Type</h2>
+    </div>
+
+    <div style="background:#F6DCCB; border-radius:26px; padding:56px; display:grid; grid-template-columns:1fr 340px; gap:56px; align-items:center;">
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B85F3F;">DISPLAY FACE · DRAWN FROM THE WORDMARK</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:120px; line-height:0.95; color:#2B2B2B;">Homie<br><span style="color:#D47A5A;">Display</span></div>
+        <p style="margin:0; font-size:17px; line-height:1.65; color:#6B5C50; max-width:60ch;">The wordmark is the seed of the typeface. Its geometry — single-weight rounded monoline, generous counters, terminals cut as full half-circles — is extended into a complete character set. Digital substitute until the family is drawn: <strong style="color:#2B2B2B;">Fredoka 500/600</strong>.</p>
+      </div>
+      <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:100%; border-radius:28px; display:block;">
+    </div>
+
+    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-top:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:26px;">CHARACTER SET · HOMIE DISPLAY 600</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:34px; line-height:1.7; color:#2B2B2B; letter-spacing:0.02em;">A B C D E F G H I J K L M<br>N O P Q R S T U V W X Y Z</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:34px; line-height:1.7; color:#6B5C50; letter-spacing:0.02em;">a b c d e f g h i j k l m<br>n o p q r s t u v w x y z<br>0 1 2 3 4 5 6 7 8 9 &amp; ? ! , . ' —</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">LETTERFORM RULES</div>
+          <div style="display:flex; flex-direction:column; gap:12px; font-size:15px; line-height:1.55; color:#6B5C50;">
+            <div><strong style="color:#2B2B2B;">Monoline.</strong> No stroke contrast anywhere in the family.</div>
+            <div><strong style="color:#2B2B2B;">Round terminals.</strong> Every stroke ends in a full half-circle, as in the <span style="font-family:Fredoka, sans-serif; font-weight:600; color:#2B2B2B;">e</span> and <span style="font-family:Fredoka, sans-serif; font-weight:600; color:#2B2B2B;">i</span>.</div>
+            <div><strong style="color:#2B2B2B;">Tall x-height.</strong> 76% of cap height — keeps small sizes friendly.</div>
+            <div><strong style="color:#2B2B2B;">Optional arc.</strong> The wordmark's 12° arc is a lockup treatment only, never applied to running text.</div>
+          </div>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">PAIRED FACES</div>
+          <div style="font-family:Nunito, sans-serif; font-weight:800; font-size:36px; line-height:1.1; margin-bottom:8px;">Nunito</div>
+          <div style="font-size:15px; line-height:1.6; color:#6B5C50; margin-bottom:22px;">Interface. 600/700/800 — matches the display face's roundness without competing.</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:30px; line-height:1.1; margin-bottom:8px;">JetBrains Mono</div>
+          <div style="font-size:15px; line-height:1.6; color:#6B5C50;">Labels, section numbers, hex codes. Uppercase, 0.16em tracking.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; margin-top:20px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:16px 36px; background:#F6DCCB; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.14em; color:#7A5D4C;">
+        <div>TOKEN</div><div>SPECIMEN</div><div>SIZE / LH / WEIGHT</div>
+      </div>
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:22px 36px; align-items:center; border-top:1px solid #E8DCC9;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">display/hero</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1.05;">A gentle check-in.</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">44 / 46 / 600 · Homie Display</div>
+      </div>
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:22px 36px; align-items:center; border-top:1px solid #E8DCC9;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">display/greeting</div>
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:30px; line-height:1.15;">Hey, I'm here.</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">30 / 34 / 500 · Homie Display</div>
+      </div>
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:22px 36px; align-items:center; border-top:1px solid #E8DCC9;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">title/lg</div>
+        <div style="font-family:Nunito, sans-serif; font-weight:800; font-size:22px; line-height:1.25;">How are you feeling today?</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">22 / 28 / 800 · Nunito</div>
+      </div>
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:22px 36px; align-items:center; border-top:1px solid #E8DCC9;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">body/md</div>
+        <div style="font-size:16px; font-weight:600; line-height:1.55; color:#3E362F;">Nothing you say here leaves your device unless you send it.</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">16 / 25 / 600 · Nunito</div>
+      </div>
+      <div style="display:grid; grid-template-columns:200px 1fr 240px; gap:24px; padding:22px 36px; align-items:center; border-top:1px solid #E8DCC9;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">label/caps</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.16em; color:#6B5C50;">YESTERDAY</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F;">12 / 16 / 400 · Mono</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 FOUNDATIONS -->
+  <section id="v-found" data-screen-label="05 Foundations" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">05</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Foundations</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:26px;">SPACING · 4 PT BASE</div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">xs 4</span><div style="height:14px; width:4px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">sm 8</span><div style="height:14px; width:8px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">md 12</span><div style="height:14px; width:12px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">lg 16</span><div style="height:14px; width:16px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">xl 24</span><div style="height:14px; width:24px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">2xl 32</span><div style="height:14px; width:32px; background:#D47A5A; border-radius:2px;"></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#A2907F; width:62px;">3xl 48</span><div style="height:14px; width:48px; background:#D47A5A; border-radius:2px;"></div></div>
+        </div>
+        <p style="margin:24px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">Screen gutter 20&nbsp;px · card padding 16&nbsp;px · block rhythm 24&nbsp;px.</p>
+      </div>
+
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:26px;">RADIUS &amp; ELEVATION</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:26px;">
+          <div style="width:92px; height:92px; background:#F6DCCB; border-radius:8px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">8</div>
+          <div style="width:92px; height:92px; background:#F6DCCB; border-radius:14px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">14</div>
+          <div style="width:92px; height:92px; background:#F6DCCB; border-radius:22px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">22</div>
+          <div style="width:92px; height:92px; background:#F6DCCB; border-radius:999px; display:grid; place-items:end center; font-family:'JetBrains Mono', monospace; font-size:11px; color:#7A5D4C; padding-bottom:8px; box-sizing:border-box;">full</div>
+        </div>
+        <div style="display:flex; gap:16px;">
+          <div style="flex:1; height:78px; background:#FFF4EC; border:1px solid #E8DCC9; border-radius:16px; display:grid; place-items:center; font-size:13px; color:#6B5C50;">flat</div>
+          <div style="flex:1; height:78px; background:#FFF4EC; border-radius:16px; box-shadow:0 2px 8px rgba(43,43,43,0.06); display:grid; place-items:center; font-size:13px; color:#6B5C50;">raised</div>
+          <div style="flex:1; height:78px; background:#FFF4EC; border-radius:16px; box-shadow:0 12px 32px rgba(43,43,43,0.12); display:grid; place-items:center; font-size:13px; color:#6B5C50;">overlay</div>
+        </div>
+        <p style="margin:24px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">Shadows stay warm-neutral and low. No coloured glows.</p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:20px;">MOTION</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:15px; color:#6B5C50; line-height:1.55;">
+            <div><strong style="color:#2B2B2B;">Enter</strong> 240&nbsp;ms · cubic-bezier(.2,.8,.2,1)</div>
+            <div><strong style="color:#2B2B2B;">Exit</strong> 160&nbsp;ms · ease-in</div>
+            <div><strong style="color:#2B2B2B;">Breath</strong> 4&nbsp;s loop for waiting states</div>
+            <div style="color:#A2907F;">Nothing bounces. Nothing flashes. Honour reduced-motion.</div>
+          </div>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:20px;">TOUCH &amp; A11Y</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:15px; color:#6B5C50; line-height:1.55;">
+            <div>Hit target <strong style="color:#2B2B2B;">44 × 44&nbsp;px</strong> minimum</div>
+            <div>Focus ring 2&nbsp;px Terracotta, 2&nbsp;px offset</div>
+            <div>Body text never below 14&nbsp;px</div>
+            <div>Every mood tile carries a text label</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 COMPONENTS -->
+  <section id="v-comp" data-screen-label="06 Components" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">06</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Components</h2>
+    </div>
+
+    <div style="display:grid; grid-template-columns:340px 1fr 1fr; gap:20px; align-items:start;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:28px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">APP SHELL · PHONE</div>
+        <div style="background:#2B2B2B; border-radius:38px; padding:9px;">
+          <div style="background:#FFF4EC; border-radius:30px; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; padding:12px 20px 6px; font-family:Nunito, sans-serif; font-size:12px; font-weight:800;"><span>9:41</span><span style="color:#A2907F;">▮▮▮</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px 18px;">
+              <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:27px; color:#D47A5A; line-height:1;">Homie</div>
+              <div style="display:flex; align-items:center; gap:9px;">
+                <div style="width:24px; height:24px; border-radius:50%; background:#FFFCF8; display:grid; place-items:center; font-family:Nunito, sans-serif; font-size:12px; font-weight:800; color:#6B5C50;">i</div>
+                <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:26px; height:26px; border-radius:50%; object-fit:cover; object-position:50% 62%;">
+              </div>
+            </div>
+            <div style="padding:0 18px 18px;">
+              <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:26px; line-height:1.2; color:#2B2B2B;">Hey, I'm here.</div>
+              <div style="font-family:Nunito, sans-serif; font-weight:700; font-size:15px; line-height:1.3; color:#2B2B2B; margin:6px 0 16px;">How are you feeling today?</div>
+              <div style="display:flex; flex-direction:column; gap:8px; font-family:Nunito, sans-serif;">
+                <div style="background:#E7EFE3; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I'm doing okay</div>
+                <div style="background:#E4EBF2; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I'm having a tough day</div>
+                <div style="background:#EDE4F2; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">I need support</div>
+                <div style="background:#F2EDE4; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700;">Just checking in</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid #E8DCC9; padding:10px 0 16px; text-align:center; font-family:Nunito, sans-serif; font-size:10px; font-weight:700; color:#A2907F;">
+              <div style="color:#D47A5A;">Check-in</div><div>History</div><div>Tools</div><div>Profile</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">BUTTONS</div>
+          <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">
+            <button style="font-family:Nunito, sans-serif; font-size:16px; font-weight:800; color:#FFF4EC; background:#D47A5A; border:none; border-radius:999px; padding:14px 28px; cursor:pointer;" style-hover="background:#B85F3F">Tap to check in</button>
+            <button style="font-family:Nunito, sans-serif; font-size:16px; font-weight:700; color:#2B2B2B; background:#F6DCCB; border:none; border-radius:999px; padding:14px 28px; cursor:pointer;" style-hover="background:#EFCCB4">Maybe later</button>
+            <button style="font-family:Nunito, sans-serif; font-size:16px; font-weight:700; color:#B85F3F; background:transparent; border:1.5px solid #D47A5A; border-radius:999px; padding:13px 26px; cursor:pointer;" style-hover="background:#F6DCCB">Learn more</button>
+            <button style="font-family:Nunito, sans-serif; font-size:16px; font-weight:700; color:#B9A99C; background:#E8DCC9; border:none; border-radius:999px; padding:14px 28px;">Disabled</button>
+          </div>
+          <p style="margin:22px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">One primary per screen. Labels are verbs in the user's voice, sentence case, no full stop.</p>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">CHIPS &amp; INPUT</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+            <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:700;">Sleep</span>
+            <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:700;">Work</span>
+            <span style="padding:8px 15px; border-radius:999px; background:#D47A5A; color:#FFF4EC; font-size:13px; font-weight:800;">People</span>
+            <span style="padding:8px 15px; border-radius:999px; background:#F6DCCB; font-size:13px; font-weight:700;">Money</span>
+            <span style="padding:8px 15px; border-radius:999px; border:1.5px dashed #D4A58A; font-size:13px; font-weight:700; color:#A2907F;">+ Add</span>
+          </div>
+          <div style="background:#FFF4EC; border:1px solid #E8DCC9; border-radius:14px; padding:14px 16px; font-size:15px; font-weight:600; color:#B9A99C;">Say as much or as little as you like…</div>
+          <p style="margin:18px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">Inputs are never required. Empty is a valid answer.</p>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">NOTIFICATION · WATCH</div>
+          <div style="width:250px; background:#2B2B2B; border-radius:26px; padding:18px; color:#FFF4EC;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+              <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover; object-position:50% 62%;">
+              <span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.14em; color:#B9A99C;">HOMIE</span>
+              <span style="margin-left:auto; font-family:'JetBrains Mono', monospace; font-size:11px; color:#B9A99C;">9:41</span>
+            </div>
+            <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:18px; line-height:1.3; margin-bottom:14px;">Hey, just checking in. How are you feeling?</div>
+            <div style="background:#D47A5A; color:#FFF4EC; border-radius:999px; padding:11px; text-align:center; font-size:14px; font-weight:800;">Tap to check in</div>
+            <div style="font-size:12px; font-weight:600; color:#B9A99C; margin-top:10px; text-align:center;">You're not alone.</div>
+          </div>
+          <p style="margin:20px 0 0; font-size:14px; line-height:1.6; color:#A2907F;">Charcoal surface on wearables — cream stays on the phone. One action, always.</p>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:36px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:24px;">MOOD TILE STATES</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:14px; background:#E7EFE3; border-radius:14px; padding:14px 16px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:#FFFCF8; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:800;">I'm doing okay</div><div style="font-size:13px; font-weight:600; color:#6B7A66;">Default</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px; background:#EDE4F2; border-radius:14px; padding:14px 16px; outline:2px solid #D47A5A; outline-offset:2px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:#FFFCF8; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:800;">I need support</div><div style="font-size:13px; font-weight:600; color:#77687F;">Focused / selected</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px; background:#FFF4EC; border:1px solid #E8DCC9; border-radius:14px; padding:14px 16px; opacity:0.55;">
+              <div style="width:32px; height:32px; border-radius:50%; background:#E8DCC9; flex:none;"></div>
+              <div style="flex:1;"><div style="font-size:15px; font-weight:800;">Just checking in</div><div style="font-size:13px; font-weight:600; color:#A2907F;">Disabled</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 VOICE -->
+  <section id="v-voice" data-screen-label="07 Voice" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:28px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">07</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Voice</h2>
+    </div>
+
+    <div style="background:#F6DCCB; border-radius:26px; padding:56px; margin-bottom:20px;">
+      <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:56px; line-height:1.1; color:#2B2B2B; max-width:22ch;">Talk like a friend, <span style="color:#D47A5A;">not a form.</span></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; overflow:hidden;">
+        <div style="padding:14px 32px; background:#E7EFE3; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#4F6247;">WE SAY</div>
+        <div style="padding:32px; display:flex; flex-direction:column; gap:16px; font-size:17px; font-weight:600; line-height:1.5;">
+          <div>“Hey, just checking in.”</div>
+          <div>“That sounds heavy. Want to talk about it?”</div>
+          <div>“No rush — I'll be here later.”</div>
+          <div>“Thanks for telling me.”</div>
+        </div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; overflow:hidden;">
+        <div style="padding:14px 32px; background:#F2E4E0; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#8A5140;">WE DON'T</div>
+        <div style="padding:32px; display:flex; flex-direction:column; gap:16px; font-size:17px; font-weight:600; line-height:1.5; color:#A2907F;">
+          <div>“Complete your daily wellness assessment.”</div>
+          <div>“Your mood score dropped 12% this week.”</div>
+          <div>“You've broken your 7-day streak!”</div>
+          <div>“Logged successfully.”</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:22px;">Short sentences</div>
+        <div style="font-size:15px; line-height:1.6; color:#6B5C50;">Under 12 words on a phone. Under 8 on a watch.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:22px;">No diagnosis</div>
+        <div style="font-size:15px; line-height:1.6; color:#6B5C50;">Homie never names a condition or gives medical advice.</div>
+      </div>
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:22px;">Always an exit</div>
+        <div style="font-size:15px; line-height:1.6; color:#6B5C50;">“Not now” is offered as often as “Yes”.</div>
+      </div>
+      <div style="background:#2B2B2B; color:#FFF4EC; border-radius:22px; padding:32px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:22px;">Crisis language</div>
+        <div style="font-size:15px; line-height:1.6; color:#C7BBB1;">Direct, calm, no metaphors: “I can connect you with someone now.” Human help is one tap away.</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 08 CHANNELS -->
+  <section id="v-channels" data-screen-label="08 Channels" style="padding:72px 48px 0;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom:12px;">
+      <span style="font-family:'JetBrains Mono', monospace; font-size:15px; color:#D47A5A;">08</span>
+      <h2 style="margin:0; font-family:Fredoka, sans-serif; font-weight:600; font-size:44px; line-height:1;">Channels</h2>
+    </div>
+    <p style="margin:0 0 28px; font-size:17px; line-height:1.6; color:#6B5C50; max-width:78ch;">Homie reaches people where they already are: a text thread on iMessage, and a voice call run by an ElevenLabs conversational agent. Neither channel gets its own app UI — the design work is the <strong style="color:#2B2B2B;">shape of the message</strong> and the <strong style="color:#2B2B2B;">shape of the conversation</strong>.</p>
+
+    <div style="display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; margin-bottom:20px;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:28px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">IMESSAGE THREAD</div>
+        <div style="background:#2B2B2B; border-radius:38px; padding:9px;">
+          <div style="background:#FFFFFF; border-radius:30px; overflow:hidden; font-family:-apple-system, 'SF Pro Text', Nunito, sans-serif;">
+            <div style="display:flex; justify-content:space-between; padding:12px 20px 4px; font-size:12px; font-weight:700; color:#2B2B2B;"><span>9:41</span><span style="color:#8E8E93;">▮▮▮</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 0 12px; border-bottom:1px solid #E5E5EA;">
+              <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:44px; height:44px; border-radius:50%; object-fit:cover; object-position:50% 62%;">
+              <div style="font-size:12px; font-weight:600; color:#2B2B2B;">Homie</div>
+            </div>
+            <div style="padding:16px 14px; display:flex; flex-direction:column; gap:8px;">
+              <div style="text-align:center; font-size:10px; color:#8E8E93; margin-bottom:4px;">Today 9:41</div>
+              <div style="align-self:flex-start; max-width:78%; background:#E9E9EB; color:#2B2B2B; border-radius:18px; padding:9px 13px; font-size:14px; line-height:1.35;">Hey, just checking in. How's today going?</div>
+              <div style="align-self:flex-end; max-width:78%; background:#D47A5A; color:#FFF4EC; border-radius:18px; padding:9px 13px; font-size:14px; line-height:1.35;">Honestly kind of rough</div>
+              <div style="align-self:flex-start; max-width:78%; background:#E9E9EB; color:#2B2B2B; border-radius:18px; padding:9px 13px; font-size:14px; line-height:1.35;">That sounds heavy. Want to talk about it, or just sit with it for a bit?</div>
+              <div style="align-self:flex-start; display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
+                <span style="border:1.5px solid #D47A5A; color:#B85F3F; border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600;">Let's talk</span>
+                <span style="border:1.5px solid #C7C7CC; color:#6B5C50; border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600;">Just sit</span>
+                <span style="border:1.5px solid #C7C7CC; color:#6B5C50; border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600;">Call me</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; padding:10px 14px 18px; border-top:1px solid #E5E5EA;">
+              <div style="flex:1; border:1px solid #C7C7CC; border-radius:999px; padding:8px 14px; font-size:13px; color:#8E8E93;">iMessage</div>
+              <div style="width:30px; height:30px; border-radius:50%; background:#D47A5A; color:#FFF4EC; display:grid; place-items:center; font-size:14px; font-weight:700;">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div style="background:#F6DCCB; border-radius:22px; padding:32px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B85F3F; margin-bottom:22px;">MESSAGE ANATOMY</div>
+          <div style="display:flex; flex-direction:column; gap:14px; font-size:15px; line-height:1.55; color:#6B5C50;">
+            <div><strong style="color:#2B2B2B;">One bubble, one idea.</strong> Never send two messages back to back; never exceed 160 characters in the opener.</div>
+            <div><strong style="color:#2B2B2B;">Question last.</strong> The bubble ends on the question so the reply field is the obvious next move.</div>
+            <div><strong style="color:#2B2B2B;">Quick replies are optional.</strong> Max three, verbs only, always including a low-effort out (“Just sit”).</div>
+            <div><strong style="color:#2B2B2B;">Terracotta is the send colour.</strong> Homie's own bubbles stay system grey — the brand colour marks the person's voice and the actions, not the bot.</div>
+          </div>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">CADENCE &amp; CONSENT</div>
+          <div style="display:flex; flex-direction:column; gap:12px; font-size:15px; line-height:1.55; color:#6B5C50;">
+            <div><strong style="color:#2B2B2B;">Max one unprompted text a day</strong>, none between 22:00 and 08:00 unless asked for.</div>
+            <div><strong style="color:#2B2B2B;">No reply is an answer.</strong> Homie never follows up twice on the same thread.</div>
+            <div><strong style="color:#2B2B2B;">STOP works instantly</strong>, and “pause for a week” is offered before it's needed.</div>
+            <div><strong style="color:#2B2B2B;">First message of any thread</strong> re-states who this is and how to stop.</div>
+          </div>
+          <div style="margin-top:22px; background:#FFF4EC; border:1px solid #E8DCC9; border-radius:14px; padding:16px; font-size:14px; line-height:1.5; color:#3E362F;">“Hi — it's Homie. I'll check in once a day. Reply STOP any time and I'll go quiet.”</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start;">
+      <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:28px;">
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">VOICE CALL · IN PROGRESS</div>
+        <div style="background:#2B2B2B; border-radius:38px; padding:9px;">
+          <div style="background:#2B2B2B; border-radius:30px; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:22px 20px 26px; color:#FFF4EC;">
+            <div style="display:flex; justify-content:space-between; width:100%; font-family:Nunito, sans-serif; font-size:12px; font-weight:800; margin-bottom:26px;"><span>9:41</span><span style="color:#B9A99C;">▮▮▮</span></div>
+            <img src="uploads/pasted-1784987587938-0.png" alt="" style="width:104px; height:104px; border-radius:50%; object-fit:cover; object-position:50% 62%; margin-bottom:16px;">
+            <div style="font-family:Fredoka, sans-serif; font-weight:600; font-size:28px; line-height:1; color:#FFF4EC;">Homie</div>
+            <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#B9A99C; margin:10px 0 22px;">LISTENING · 02:14</div>
+            <div style="display:flex; align-items:center; gap:5px; height:44px; margin-bottom:22px;">
+              <div style="width:5px; height:14px; border-radius:3px; background:#E8A98D;"></div>
+              <div style="width:5px; height:26px; border-radius:3px; background:#E8A98D;"></div>
+              <div style="width:5px; height:40px; border-radius:3px; background:#D47A5A;"></div>
+              <div style="width:5px; height:22px; border-radius:3px; background:#E8A98D;"></div>
+              <div style="width:5px; height:34px; border-radius:3px; background:#D47A5A;"></div>
+              <div style="width:5px; height:12px; border-radius:3px; background:#E8A98D;"></div>
+              <div style="width:5px; height:30px; border-radius:3px; background:#D47A5A;"></div>
+              <div style="width:5px; height:18px; border-radius:3px; background:#E8A98D;"></div>
+              <div style="width:5px; height:8px; border-radius:3px; background:#8C7A6E;"></div>
+            </div>
+            <div style="background:#3A3A3A; border-radius:14px; padding:12px 14px; font-family:Nunito, sans-serif; font-size:13px; font-weight:600; line-height:1.45; color:#E8DCC9; width:100%; box-sizing:border-box; margin-bottom:22px;">“Take your time. I'm not going anywhere.”</div>
+            <div style="display:flex; gap:14px; align-items:center;">
+              <div style="width:52px; height:52px; border-radius:50%; background:#3A3A3A; display:grid; place-items:center; font-family:Nunito, sans-serif; font-size:11px; font-weight:800; color:#E8DCC9;">Mute</div>
+              <div style="width:64px; height:64px; border-radius:50%; background:#D47A5A; display:grid; place-items:center; font-family:Nunito, sans-serif; font-size:12px; font-weight:800; color:#FFF4EC;">End</div>
+              <div style="width:52px; height:52px; border-radius:50%; background:#3A3A3A; display:grid; place-items:center; font-family:Nunito, sans-serif; font-size:11px; font-weight:800; color:#E8DCC9;">Human</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">AGENT PERSONA · ELEVENLABS</div>
+          <div style="display:flex; flex-direction:column; gap:11px; font-size:15px; line-height:1.55; color:#6B5C50;">
+            <div><strong style="color:#2B2B2B;">Timbre</strong> — warm, mid-low, unhurried. No upward-inflected retail brightness.</div>
+            <div><strong style="color:#2B2B2B;">Pace</strong> — ~135 wpm, slower than the caller by a touch.</div>
+            <div><strong style="color:#2B2B2B;">Stability 0.55 · Similarity 0.75</strong> — enough variance to sound alive, not enough to drift.</div>
+            <div><strong style="color:#2B2B2B;">Silence is allowed.</strong> The agent waits a full 2.5&nbsp;s before filling a pause.</div>
+            <div><strong style="color:#2B2B2B;">Barge-in always on.</strong> The caller interrupting is a feature, never an error state.</div>
+          </div>
+        </div>
+        <div style="background:#FFFCF8; border:1px solid #E8DCC9; border-radius:22px; padding:32px;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#D47A5A; margin-bottom:22px;">CALL SCRIPT SPINE</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; gap:12px; align-items:baseline;"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#A2907F; flex:none;">01</span><span style="font-size:15px; line-height:1.5; color:#3E362F;">“Hi, it's Homie. Is now an okay time?” — consent before content.</span></div>
+            <div style="display:flex; gap:12px; align-items:baseline;"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#A2907F; flex:none;">02</span><span style="font-size:15px; line-height:1.5; color:#3E362F;">One open question. Then listen.</span></div>
+            <div style="display:flex; gap:12px; align-items:baseline;"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#A2907F; flex:none;">03</span><span style="font-size:15px; line-height:1.5; color:#3E362F;">Reflect back in the caller's own words before adding anything.</span></div>
+            <div style="display:flex; gap:12px; align-items:baseline;"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#A2907F; flex:none;">04</span><span style="font-size:15px; line-height:1.5; color:#3E362F;">Offer one next step, never three.</span></div>
+            <div style="display:flex; gap:12px; align-items:baseline;"><span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#A2907F; flex:none;">05</span><span style="font-size:15px; line-height:1.5; color:#3E362F;">Close warm: “I'll check in tomorrow. You can call me first.”</span></div>
+          </div>
+        </div>
+        <div style="background:#2B2B2B; color:#FFF4EC; border-radius:22px; padding:32px; grid-column:span 2;">
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.16em; color:#E8A98D; margin-bottom:22px;">ESCALATION · THE ONE THING THE AGENT NEVER IMPROVISES</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:20px;">Detect</div>
+              <div style="font-size:15px; line-height:1.55; color:#C7BBB1;">Risk language triggers a scripted branch — no generative response is spoken in that state.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:20px;">Say</div>
+              <div style="font-size:15px; line-height:1.55; color:#C7BBB1;">“I want to get you to someone who can help right now. Can I connect you?” Calm, direct, no metaphors.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="font-family:Fredoka, sans-serif; font-weight:500; font-size:20px;">Hand off</div>
+              <div style="font-size:15px; line-height:1.55; color:#C7BBB1;">Warm transfer to a human line within 20&nbsp;s, and a text with the same number lands on the thread.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:56px; padding-top:28px; border-top:1px solid #E8DCC9; display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#A2907F;">
+      <span>Homie Design System · v2.0 · Core colorway</span>
+      <span style="font-family:Fredoka, sans-serif; font-weight:500; font-size:22px; color:#D47A5A;">A gentle check-in. When you need it.</span>
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>
