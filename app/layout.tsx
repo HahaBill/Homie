@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     "gentle",
   ],
   icons: {
-    icon: "/homie-logo.png",
-    apple: "/homie-logo.png",
+    icon: "/homie-logo.jpg",
+    apple: "/homie-logo.jpg",
   },
   openGraph: {
     title: "Homie — A gentle check-in, when you need it",
@@ -47,14 +47,14 @@ export const metadata: Metadata = {
       "A wellbeing companion that shows up quietly and asks one honest question. Warm cream is the canvas; terracotta is the only thing that ever asks to be tapped.",
     siteName: "Homie",
     type: "website",
-    images: [{ url: "/homie-logo.png", width: 512, height: 512, alt: "Homie" }],
+    images: [{ url: "/homie-logo.jpg", width: 512, height: 512, alt: "Homie" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Homie — A gentle check-in, when you need it",
     description:
       "A wellbeing companion that shows up quietly and asks one honest question.",
-    images: ["/homie-logo.png"],
+    images: ["/homie-logo.jpg"],
   },
 };
 

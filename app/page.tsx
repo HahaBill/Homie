@@ -1,7 +1,7 @@
 /* Homie — landing page
    Copy, palette, and components applied from "Homie Design System v2". */
 
-const LOGO = "/homie-logo.png";
+const LOGO = "/homie-logo.jpg";
 
 const PRINCIPLES = [
   {
