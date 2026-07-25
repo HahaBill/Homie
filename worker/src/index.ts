@@ -80,10 +80,25 @@ app.post("/webhooks/sendblue", async (c) => {
   log({ event: "webhook_received", provider: "sendblue", sender, message_handle: payload.message_handle ?? null });
 
   // Acknowledge Sendblue immediately; do the actual work after responding.
-  c.executionCtx.waitUntil(handleInboundMessage(c.env, sender, text, payload.message_handle));
+  c.executionCtx.waitUntil(
+    handleInboundMessage(c.env, sender, text, new URL(c.req.url).origin, payload.message_handle)
+  );
 
   return c.json({ received: true });
 });
+
+/**
+ * The greeting image (worker static asset — see wrangler.jsonc "assets").
+ * Rides along when Homie introduces itself: the model flags "who are you"
+ * style messages, and a users row created seconds ago means this is their
+ * first ever message. Safety paths never attach it.
+ */
+const GREETING_IMAGE_PATH = "/homie-greeting.png";
+const FIRST_CONTACT_WINDOW_MS = 10_000;
+
+function isFirstContact(user: User): boolean {
+  return Date.now() - new Date(user.created_at).getTime() < FIRST_CONTACT_WINDOW_MS;
+}
 
 /**
  * The one inbound pipeline. Ordering is deliberate on two axes at once —
@@ -100,6 +115,7 @@ async function handleInboundMessage(
   env: Env,
   sender: string,
   text: string,
+  origin: string,
   providerMessageId?: string
 ): Promise<void> {
   try {
@@ -165,6 +181,7 @@ async function handleInboundMessage(
       : await createAdHocCheckin(env, user.id, text);
 
     const parsed = await parsePromise;
+    const withGreeting = parsed.is_introduction || isFirstContact(user);
 
     // The send is what she's actually waiting on, so it still starts alongside
     // the observation write — but the two settle independently. Under
@@ -172,7 +189,10 @@ async function handleInboundMessage(
     // logged a reply that had already been delivered as inbound_reply_failed
     // and skipped its reply_sent audit entry.
     const [sendResult, persistResult] = await Promise.allSettled([
-      sendblueAdapter.send(env, sender, { text: parsed.reply_text }),
+      sendblueAdapter.send(env, sender, {
+        text: parsed.reply_text,
+        ...(withGreeting ? { media_url: `${origin}${GREETING_IMAGE_PATH}` } : {}),
+      }),
       insertObservation(env, checkin.id, parsed),
     ]);
     await auditInbound;
@@ -358,7 +378,11 @@ app.post("/chat", async (c) => {
     await insertAuditLog(c.env, user.id, "reply_sent", { checkin_id: checkin.id, channel: "web" });
     log({ event: "web_chat_reply", user_id: user.id, checkin_id: checkin.id });
 
-    return c.json({ reply: parsed.reply_text });
+    const withGreeting = parsed.is_introduction || isFirstContact(user);
+    return c.json({
+      reply: parsed.reply_text,
+      ...(withGreeting ? { image_url: `${new URL(c.req.url).origin}${GREETING_IMAGE_PATH}` } : {}),
+    });
   } catch (err) {
     log({ event: "web_chat_failed", error: err instanceof Error ? err.message : String(err) });
     return c.json({ error: "chat failed" }, 500);

@@ -9,6 +9,11 @@
   "minify": true,
   "observability": { "enabled": true },
 
+  // Static assets (the greeting image Sendblue fetches via media_url).
+  // Requests matching a file in ./public serve the asset; everything else
+  // falls through to the worker script.
+  "assets": { "directory": "./public" },
+
   // No Durable Objects yet — deliberate, see docs/ARCHITECTURE.md. Supabase is
   // the store for this slice; a PATIENT-style DO can be reintroduced later for
   // contextual/session state without touching the Sendblue adapter.

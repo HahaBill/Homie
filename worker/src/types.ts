@@ -51,6 +51,8 @@ export type ParsedReply = {
   confidence: number;
   note: string;
   reply_text: string;
+  /** True when the message asks who/what Homie is, or reads like a first hello — triggers the greeting image. */
+  is_introduction: boolean;
 };
 
 /**
