@@ -1,31 +1,27 @@
 import {ClerkProvider} from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Nunito_Sans } from "next/font/google";
+import { Fredoka, Nunito, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const fredoka = Fredoka({
   subsets: ["latin"],
-  weight: ["600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-display",
   display: "swap",
 });
 
-const nunitoSans = Nunito_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "600", "700", "800"],
   variable: "--font-body",
   display: "swap",
-  // Next has no built-in metric overrides for Nunito Sans, so its automatic
-  // fallback adjustment is disabled and an explicit stack supplied instead.
-  adjustFontFallback: false,
-  fallback: [
-    "system-ui",
-    "-apple-system",
-    "Segoe UI",
-    "Helvetica Neue",
-    "Arial",
-    "sans-serif",
-  ],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -64,7 +60,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FBF4EA",
+  themeColor: "#FFF4EC",
   width: "device-width",
   initialScale: 1,
 };
@@ -76,7 +72,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-GB">
-      <body className={`${fraunces.variable} ${nunitoSans.variable}`}>
+      <body
+        className={`${fredoka.variable} ${nunito.variable} ${jetbrainsMono.variable}`}
+      >
         <ClerkProvider>
           {children}
         </ClerkProvider>

@@ -210,6 +210,99 @@ function utcMinute(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Inbound: web chat. Same pipeline as the Sendblue webhook — same gates in
+// the same order — but the reply travels back over HTTP to the Next.js app
+// instead of out through Sendblue. Server-to-server only: the Next route
+// holds the bearer token and the Clerk-verified phone number; a browser
+// never reaches this directly.
+// ---------------------------------------------------------------------------
+
+app.post("/chat", async (c) => {
+  if (!c.env.WORKER_ADMIN_TOKEN) {
+    return c.json({ error: "WORKER_ADMIN_TOKEN not configured — route disabled" }, 501);
+  }
+  const auth = c.req.header("Authorization");
+  if (auth !== `Bearer ${c.env.WORKER_ADMIN_TOKEN}`) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  const body = await c.req.json<{ phone?: string; text?: string }>().catch(() => ({}) as any);
+  if (!body.phone || !body.text?.trim()) {
+    return c.json({ error: "phone and text are required" }, 400);
+  }
+
+  let sender: string;
+  try {
+    sender = normalizePhone(body.phone);
+  } catch {
+    return c.json({ error: "invalid phone" }, 400);
+  }
+  const text = body.text.trim();
+
+  try {
+    // Red-flag bypass first, same as the webhook path (PRD §7.1) — fixed
+    // guidance, no model call, and the audit must not block the response.
+    if (isRedFlag(text)) {
+      c.executionCtx.waitUntil(
+        (async () => {
+          const user = await findOrCreateUserByPhone(c.env, sender);
+          await insertAuditLog(c.env, user.id, "red_flag_bypass", { text, channel: "web" });
+        })().catch((err) => log({ event: "red_flag_audit_failed", channel: "web", error: String(err) }))
+      );
+      log({ event: "red_flag_bypass", channel: "web" });
+      return c.json({ reply: RED_FLAG_RESPONSE, red_flag: true });
+    }
+
+    const command = classifyCommand(text);
+    if (command) {
+      const user = await findOrCreateUserByPhone(c.env, sender);
+      if (command === "stop") {
+        await setUserStatus(c.env, user.id, "stopped");
+        await insertAuditLog(c.env, user.id, "stop", { channel: "web" });
+        return c.json({ reply: STOP_RESPONSE });
+      }
+      if (command === "delete") {
+        const summary = await getDataSummary(c.env, user);
+        await insertAuditLog(c.env, user.id, "delete", { channel: "web", checkins_deleted: summary.checkins_count });
+        await deleteUserData(c.env, user.id);
+        return c.json({ reply: DELETE_RESPONSE });
+      }
+      const summary = await getDataSummary(c.env, user);
+      await insertAuditLog(c.env, user.id, "my_data_request", { channel: "web" });
+      return c.json({ reply: myDataResponseText(summary) });
+    }
+
+    // Normal flow, model call first as in handleInboundMessage.
+    const parsePromise = parseAndComposeReply(c.env, text);
+    parsePromise.catch(() => {});
+
+    const user = await findOrCreateUserByPhone(c.env, sender);
+    if (user.status !== "active") {
+      return c.json({ reply: "Homie is paused for this number. Text START from your phone to pick it back up." });
+    }
+    const auditInbound = insertAuditLog(c.env, user.id, "inbound_received", { text, channel: "web" }).catch((err) =>
+      log({ event: "audit_failed", user_id: user.id, error: String(err) })
+    );
+
+    const open = await getOpenCheckin(c.env, user.id);
+    const checkin = open
+      ? await closeCheckinWithReply(c.env, open.id, text)
+      : await createAdHocCheckin(c.env, user.id, text);
+
+    const parsed = await parsePromise;
+
+    await Promise.all([insertObservation(c.env, checkin.id, parsed), auditInbound]);
+    await insertAuditLog(c.env, user.id, "reply_sent", { checkin_id: checkin.id, channel: "web" });
+    log({ event: "web_chat_reply", user_id: user.id, checkin_id: checkin.id });
+
+    return c.json({ reply: parsed.reply_text });
+  } catch (err) {
+    log({ event: "web_chat_failed", error: err instanceof Error ? err.message : String(err) });
+    return c.json({ error: "chat failed" }, 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Outbound smoke test — proves the Sendblue adapter works without waiting on
 // a real inbound webhook. Refuses if WORKER_ADMIN_TOKEN isn't configured.
 // ---------------------------------------------------------------------------
