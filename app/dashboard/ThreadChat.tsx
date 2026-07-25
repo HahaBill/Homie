@@ -143,12 +143,6 @@ export default function ThreadChat() {
         </div>
       ) : null}
 
-      {!onboarded && messages.length === 0 ? (
-        <div className="day-stamp">
-          <a href="/onboarding">TELL HOMIE A LITTLE ABOUT YOURSELF FIRST, IF YOU LIKE</a>
-        </div>
-      ) : null}
-
       <form className="composer" onSubmit={send}>
         <input
           value={draft}

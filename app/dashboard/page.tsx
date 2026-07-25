@@ -51,31 +51,9 @@ export default async function DashboardPage() {
           <ThreadChat />
 
           <div className="side-cards">
-            {!patient?.consent_at ? (
-              <div className="side-card" style={{ background: "var(--peach)" }}>
-                <span className="mono" style={{ color: "var(--clay)" }}>
-                  MORNING BRIEFINGS
-                </span>
-                <p style={{ fontSize: 17, lineHeight: 1.55, color: "var(--ink-soft)", marginBottom: 16 }}>
-                  Homie can text you each morning — pressure, heat and sun for
-                  the day, read against what is normal for you.
-                </p>
-                <a className="btn btn-primary btn-sm" href="/onboarding">
-                  set that up
-                </a>
-              </div>
-            ) : (
-              <div className="side-card">
-                <span className="mono">MORNING BRIEFINGS · ON</span>
-                <ul>
-                  <li>One message a morning, at most. None if there is nothing to say.</li>
-                  <li>
-                    <a href="/onboarding">change what Homie knows about you</a>
-                  </li>
-                </ul>
-              </div>
-            )}
-
+            {/* Onboarding is parked for now — no setup gate stands between
+                signing in and the thread. Consent for morning texts is
+                captured separately when that flow returns. */}
             <div className="side-card">
               <span className="mono">THE STANDING PROMISES</span>
               <ul>

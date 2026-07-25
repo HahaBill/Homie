@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 
 /**
@@ -22,8 +21,21 @@ import { useSignIn, useSignUp } from "@clerk/nextjs";
 
 type Stage = "email" | "code";
 
+/**
+ * Leave for the dashboard with a full document navigation, not router.push.
+ *
+ * On a Clerk *development* instance the session is only trusted on our domain
+ * once the "dev browser" token has been synced there, and that handshake only
+ * runs on a real document request. A client-side RSC navigation skips it, so
+ * middleware saw `dev-browser-missing`, called the request signed out, and
+ * bounced straight back to sign-in. A hard navigation makes the handshake
+ * happen. Harmless on a production instance, where the cookie is already good.
+ */
+function land(): void {
+  window.location.assign("/dashboard");
+}
+
 export default function SignInCard() {
-  const router = useRouter();
   const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveFromSignUp } =
     useSignUp();
@@ -100,7 +112,7 @@ export default function SignInCard() {
         });
         if (result.status === "complete") {
           await setActive({ session: result.createdSessionId });
-          router.push("/dashboard");
+          land();
           return;
         }
       } else {
@@ -109,7 +121,7 @@ export default function SignInCard() {
         });
         if (result.status === "complete") {
           await setActiveFromSignUp({ session: result.createdSessionId });
-          router.push("/onboarding");
+          land();
           return;
         }
       }
