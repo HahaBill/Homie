@@ -1,0 +1,15 @@
+# Copy to .dev.vars for local `wrangler dev` (gitignored). The Sendblue
+# webhook still won't reach localhost — deploy + `wrangler tail` for anything
+# webhook-related.
+
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+SENDBLUE_API_KEY_ID=
+SENDBLUE_API_KEY_SECRET=
+SENDBLUE_WEBHOOK_SECRET=
+
+OPENAI_API_KEY=
+
+# Shared secret required by POST /send-test. Leave unset to disable the route.
+WORKER_ADMIN_TOKEN=

@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "homie-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "observability": { "enabled": true },
+
+  // No Durable Objects yet — deliberate, see docs/ARCHITECTURE.md. Supabase is
+  // the store for this slice; a PATIENT-style DO can be reintroduced later for
+  // contextual/session state without touching the Sendblue adapter.
+
+  "vars": {
+    "OPENAI_MODEL": "gpt-5.4-mini",
+    "SENDBLUE_FROM_NUMBER": "",
+    "SKIP_SENDBLUE_VERIFY": "0"
+  }
+
+  // Secrets (never committed) — set locally in .dev.vars, and in production
+  // with `wrangler secret put <NAME>`:
+  //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+  //   SENDBLUE_API_KEY_ID, SENDBLUE_API_KEY_SECRET, SENDBLUE_WEBHOOK_SECRET
+  //   OPENAI_API_KEY
+  //   WORKER_ADMIN_TOKEN
+}

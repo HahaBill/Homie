@@ -1,0 +1,44 @@
+name: Deploy Cloudflare Worker
+
+# Deploys worker/ to Cloudflare on every push to main that touches it.
+# Does NOT push Worker secrets (SUPABASE_*, SENDBLUE_*, OPENAI_API_KEY,
+# WORKER_ADMIN_TOKEN) — those are set once with `wrangler secret put` (see
+# worker/README.md). Syncing them from GitHub secrets on every deploy was
+# deliberately left out: a secret referenced here but not yet added on the
+# GitHub side resolves to an empty string, and `wrangler secret put` would
+# silently blank out whatever is already live in Cloudflare.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - run: npm run typecheck
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
