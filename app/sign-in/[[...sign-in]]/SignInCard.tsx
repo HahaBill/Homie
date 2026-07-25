@@ -100,7 +100,7 @@ export default function SignInCard() {
         });
         if (result.status === "complete") {
           await setActive({ session: result.createdSessionId });
-          router.push("/");
+          router.push("/dashboard");
           return;
         }
       } else {
@@ -109,7 +109,7 @@ export default function SignInCard() {
         });
         if (result.status === "complete") {
           await setActiveFromSignUp({ session: result.createdSessionId });
-          router.push("/");
+          router.push("/onboarding");
           return;
         }
       }
@@ -204,7 +204,17 @@ export default function SignInCard() {
               </p>
             ) : null}
 
-            <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {/* Column flow: side-by-side pills wrapped unpredictably at some
+                widths and spilled over the card edge onto the page note. */}
+            <div
+              style={{
+                marginTop: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                alignItems: "stretch",
+              }}
+            >
               <button
                 className="btn btn-primary"
                 type="submit"

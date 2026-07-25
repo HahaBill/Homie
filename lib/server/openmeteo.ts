@@ -14,6 +14,9 @@ export type PressureSnapshot = {
   pressureDelta24h: number;
   tempC: number;
   humidity: number;
+  /** Today's daily maxima — briefing detail, nullable when Open-Meteo has gaps. */
+  uvIndexMax: number | null;
+  tempMaxC: number | null;
 };
 
 export async function fetchPressure(): Promise<PressureSnapshot | null> {
@@ -23,6 +26,7 @@ export async function fetchPressure(): Promise<PressureSnapshot | null> {
     "https://api.open-meteo.com/v1/forecast" +
     `?latitude=${lat}&longitude=${lon}` +
     "&hourly=surface_pressure,temperature_2m,relative_humidity_2m" +
+    "&daily=uv_index_max,temperature_2m_max" +
     "&past_days=1&forecast_days=1&timezone=UTC";
 
   try {
@@ -34,6 +38,10 @@ export async function fetchPressure(): Promise<PressureSnapshot | null> {
         surface_pressure?: number[];
         temperature_2m?: number[];
         relative_humidity_2m?: number[];
+      };
+      daily?: {
+        uv_index_max?: Array<number | null>;
+        temperature_2m_max?: Array<number | null>;
       };
     };
     const h = body.hourly;
@@ -58,11 +66,22 @@ export async function fetchPressure(): Promise<PressureSnapshot | null> {
       return null;
     }
 
+    // With past_days=1, daily[0] is yesterday and daily[1] is today. These
+    // stay nullable: a briefing without a UV line beats no briefing.
+    const uvToday = body.daily?.uv_index_max?.[1];
+    const tempMaxToday = body.daily?.temperature_2m_max?.[1];
+
     return {
       pressureHpa: round1(pressure as number),
       pressureDelta24h: round1((pressure as number) - (before as number)),
       tempC: round1(temp as number),
       humidity: round1(humidity as number),
+      uvIndexMax:
+        typeof uvToday === "number" && Number.isFinite(uvToday) ? round1(uvToday) : null,
+      tempMaxC:
+        typeof tempMaxToday === "number" && Number.isFinite(tempMaxToday)
+          ? round1(tempMaxToday)
+          : null,
     };
   } catch {
     return null;

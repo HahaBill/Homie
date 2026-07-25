@@ -55,6 +55,26 @@ export async function GET(req: NextRequest) {
   const dryRun = !sendblueConfigured();
   const today = new Date().toISOString().slice(0, 10);
 
+  // One round trip for everyone's medication schedule; first-listed med per
+  // user is the one the briefing may mention. Failure degrades to briefings
+  // without a medication line rather than no briefings.
+  const medByUser = new Map<string, { name: string; schedule: string | null }>();
+  {
+    const { data: meds, error: medsError } = await db
+      .from("medications")
+      .select("user_id, name, schedule")
+      .order("created_at", { ascending: true });
+    if (medsError) {
+      console.error(`medications fetch: ${medsError.message}`);
+    } else {
+      for (const m of meds ?? []) {
+        if (!medByUser.has(m.user_id)) {
+          medByUser.set(m.user_id, { name: m.name, schedule: m.schedule });
+        }
+      }
+    }
+  }
+
   const results: Array<Record<string, unknown>> = [];
   for (const user of (users ?? []) as UserRow[]) {
     // One user's failure is never allowed to cost everyone else their morning
@@ -67,7 +87,7 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const text = composeMorning(user, snapshot);
+      const text = composeMorning(user, snapshot, medByUser.get(user.id));
 
       if (dryRun) {
         results.push({ user: user.id, dry_run: true, preview: text });
@@ -141,18 +161,62 @@ export async function GET(req: NextRequest) {
   );
 }
 
-function composeMorning(user: UserRow, w: PressureSnapshot | null): string {
-  const name = user.name ? `morning, ${user.name.toLowerCase()}` : "morning";
-  let weatherLine = "";
+/**
+ * The morning briefing, per the shape the design fixes (one idea per line,
+ * blank lines between, one ignorable question at the end) and the PRD's
+ * limits: patterns are reported as what has been seen before — never a
+ * prediction, never a diagnosis, never a dose. The sun and heat lines are
+ * generic photosensitivity and heat-pacing precautions relevant to lupus,
+ * phrased as information about the day, not instructions about medication.
+ */
+function composeMorning(
+  user: UserRow,
+  w: PressureSnapshot | null,
+  med?: { name: string; schedule: string | null },
+): string {
+  const lines: string[] = [];
+  lines.push(user.name ? `morning, ${user.name.toLowerCase()}.` : "morning.");
+
+  // What the weather is doing, read against the pattern Homie has seen.
   if (w && w.pressureDelta24h <= -5) {
-    weatherLine =
-      " pressure's dropping today, which is usually a rough combination for you.";
+    lines.push(
+      "pressure's dropping hard today — the same shape as mornings that have been rough on your hands before.",
+    );
   } else if (w && w.pressureDelta24h >= 5) {
-    weatherLine = " pressure's climbing back up today.";
+    lines.push("pressure's climbing back up today.");
   } else if (w) {
-    weatherLine = " pressure's steady today.";
+    lines.push("pressure's steady today.");
   }
-  return `${name}.${weatherLine}\n\nno rush — how are the hands this morning?`;
+
+  // Sun and heat, when today actually calls for it.
+  const precautions: string[] = [];
+  if (w?.uvIndexMax != null && w.uvIndexMax >= 6) {
+    precautions.push(
+      `strong sun today (uv ${w.uvIndexMax}) — sleeves, a hat, or shade if you're out for long`,
+    );
+  } else if (w?.uvIndexMax != null && w.uvIndexMax >= 3) {
+    precautions.push("moderate sun today — worth the sunscreen if you'll be outside a while");
+  }
+  if (w?.tempMaxC != null && w.tempMaxC >= 27) {
+    precautions.push(
+      `it'll reach about ${Math.round(w.tempMaxC)}° — pace the day and keep water close`,
+    );
+  }
+  if (precautions.length) lines.push(precautions.join(". ") + ".");
+
+  // The plan for the day stays hers: one gentle medication mention at most,
+  // phrased from her own schedule.
+  if (med) {
+    lines.push(
+      med.schedule
+        ? `no rush — did the ${med.name.toLowerCase()} happen ${med.schedule.toLowerCase()}?`
+        : `no rush — did the ${med.name.toLowerCase()} happen?`,
+    );
+  } else {
+    lines.push("no rush — how are the hands this morning?");
+  }
+
+  return lines.join("\n\n");
 }
 
 function withinWakingHours(timezone: string): boolean {

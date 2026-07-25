@@ -22,6 +22,7 @@ import {
   getDataSummary,
   getOpenCheckin,
   getReportPayload,
+  getUserById,
   insertAuditLog,
   insertObservation,
   setUserStatus,
@@ -326,17 +327,26 @@ app.post("/chat", async (c) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  const body = await c.req.json<{ phone?: string; text?: string }>().catch(() => ({}) as any);
-  if (!body.phone || !body.text?.trim()) {
-    return c.json({ error: "phone and text are required" }, 400);
+  const body = await c.req
+    .json<{ user_id?: string; phone?: string; text?: string }>()
+    .catch(() => ({}) as any);
+  if ((!body.user_id && !body.phone) || !body.text?.trim()) {
+    return c.json({ error: "user_id or phone, and text, are required" }, 400);
   }
 
-  let sender: string;
-  try {
-    sender = normalizePhone(body.phone);
-  } catch {
-    return c.json({ error: "invalid phone" }, 400);
+  // Two doors, one record: the phone path find-or-creates (a texting
+  // identity), while user_id trusts the Next.js app's Clerk-verified lookup
+  // — email sign-ins have no phone, so id is the only handle they carry.
+  let sender: string | null = null;
+  if (!body.user_id) {
+    try {
+      sender = normalizePhone(body.phone as string);
+    } catch {
+      return c.json({ error: "invalid phone" }, 400);
+    }
   }
+  const resolveUser = (): Promise<User | null> =>
+    body.user_id ? getUserById(c.env, body.user_id) : findOrCreateUserByPhone(c.env, sender as string);
   const text = body.text.trim();
 
   try {
@@ -345,8 +355,10 @@ app.post("/chat", async (c) => {
     if (isRedFlag(text)) {
       c.executionCtx.waitUntil(
         (async () => {
-          const user = await findOrCreateUserByPhone(c.env, sender);
-          await insertAuditLog(c.env, user.id, "red_flag_bypass", { ...auditText(c.env, text), channel: "web" });
+          const user = await resolveUser();
+          if (user) {
+            await insertAuditLog(c.env, user.id, "red_flag_bypass", { ...auditText(c.env, text), channel: "web" });
+          }
         })().catch((err) => log({ event: "red_flag_audit_failed", channel: "web", error: String(err) }))
       );
       log({ event: "red_flag_bypass", channel: "web" });
@@ -355,7 +367,8 @@ app.post("/chat", async (c) => {
 
     const command = classifyCommand(text);
     if (command) {
-      const user = await findOrCreateUserByPhone(c.env, sender);
+      const user = await resolveUser();
+      if (!user) return c.json({ error: "unknown user" }, 404);
       if (command === "stop") {
         await setUserStatus(c.env, user.id, "stopped");
         await insertAuditLog(c.env, user.id, "stop", { channel: "web" });
@@ -389,7 +402,8 @@ app.post("/chat", async (c) => {
     const parsePromise = parseAndComposeReply(c.env, text);
     parsePromise.catch(() => {});
 
-    const user = await findOrCreateUserByPhone(c.env, sender);
+    const user = await resolveUser();
+    if (!user) return c.json({ error: "unknown user" }, 404);
     if (user.status !== "active") {
       return c.json({ reply: "Homie is paused for this number. Text START from your phone to pick it back up." });
     }

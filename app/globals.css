@@ -1057,3 +1057,55 @@ img {
   transform: none;
   transition: none;
 }
+
+/* Sign-in layout — card + the watching tile. */
+.auth-layout {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 64px 24px 96px;
+  display: grid;
+  grid-template-columns: minmax(0, 520px) 280px;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+}
+.watch-tile {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  border-radius: 32px;
+  overflow: hidden;
+  background: var(--milk);
+  border: 1px solid var(--edge);
+}
+.watch-tile img {
+  width: 100%;
+  display: block;
+}
+.watch-eye {
+  position: absolute;
+  width: 7.5%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fffdf9;
+  border: 1px solid rgba(43, 43, 43, 0.25);
+  display: grid;
+  place-items: center;
+}
+.watch-pupil {
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #2b2016;
+  transition: transform 80ms linear;
+}
+@media (max-width: 900px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .watch-tile {
+    margin: 0 auto;
+  }
+}

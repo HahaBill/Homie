@@ -46,6 +46,20 @@ export async function findOrCreateUserByPhone(env: Env, phone: string): Promise<
 }
 
 /**
+ * Direct lookup for server-to-server callers that already resolved the user
+ * — the web chat path, where Next.js has matched a Clerk session (by phone
+ * or, since email sign-in, by email) to a users row and sends its id.
+ * Deliberately no create-on-miss: an unknown id is a caller bug, not a new
+ * patient.
+ */
+export async function getUserById(env: Env, id: string): Promise<User | null> {
+  const db = client(env);
+  const { data, error } = await db.from("users").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`getUserById: ${error.message}`);
+  return (data as User | null) ?? null;
+}
+
+/**
  * How long a claim may sit in "processing" before a retry is allowed to take
  * it over. Comfortably longer than the worst-case inbound pipeline (one model
  * call plus a handful of Supabase round trips), short enough that a genuinely

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/server/supabase";
 import { getPatientForSession } from "@/lib/server/patient";
 
@@ -7,14 +6,14 @@ import { getPatientForSession } from "@/lib/server/patient";
  * The signed-in thread.
  *
  * GET  — the caller's own messages, oldest first, assembled from checkins
- *        (message_text = Homie's side, reply_text = hers).
+ *        (message_text = Homie's side, reply_text = theirs).
  * POST — a message typed on the web. Forwarded server-to-server to the
- *        Cloudflare worker's /chat route, which runs the same safety gates
- *        and agent pipeline as an inbound text, persists it, and returns
- *        Homie's reply.
+ *        Cloudflare worker's /chat route by users-row id — the Clerk
+ *        session resolves to a patient row here (phone or email door), so
+ *        email-only accounts chat through the same pipeline as texts.
  *
  * Everything here is that person's own health data: private, no-store,
- * and scoped by the Clerk-verified phone number — never a client-supplied id.
+ * scoped by the Clerk-verified session — never a client-supplied id.
  */
 
 export const runtime = "nodejs";
@@ -55,22 +54,21 @@ export async function GET() {
   }
 
   return NextResponse.json(
-    { linked: true, name: lookup.patient.name, messages },
+    {
+      linked: true,
+      name: lookup.patient.name,
+      onboarded: Boolean(lookup.patient.consent_at),
+      messages,
+    },
     { headers: NO_STORE },
   );
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers: NO_STORE });
-  }
-  const user = await currentUser();
-  const phone =
-    user?.phoneNumbers.find((p) => p.id === user.primaryPhoneNumberId)
-      ?.phoneNumber ?? user?.phoneNumbers[0]?.phoneNumber;
-  if (!phone) {
-    return NextResponse.json({ error: "no phone on account" }, { status: 400, headers: NO_STORE });
+  const lookup = await getPatientForSession();
+  if (!lookup.ok) {
+    const status = lookup.reason === "unauthenticated" ? 401 : 400;
+    return NextResponse.json({ error: lookup.reason }, { status, headers: NO_STORE });
   }
 
   let body: { text?: string };
@@ -102,7 +100,7 @@ export async function POST(req: NextRequest) {
       "content-type": "application/json",
       authorization: `Bearer ${workerToken}`,
     },
-    body: JSON.stringify({ phone, text }),
+    body: JSON.stringify({ user_id: lookup.patient.id, text }),
     signal: AbortSignal.timeout(30_000),
   }).catch(() => null);
 
