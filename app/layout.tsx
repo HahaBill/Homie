@@ -1,65 +1,69 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka, Nunito, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 
-const fredoka = Fredoka({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["600"],
   variable: "--font-display",
   display: "swap",
 });
 
-const nunito = Nunito({
+const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+  weight: ["400", "600", "700"],
   variable: "--font-body",
   display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-  display: "swap",
+  // Next has no built-in metric overrides for Nunito Sans, so its automatic
+  // fallback adjustment is disabled and an explicit stack supplied instead.
+  adjustFontFallback: false,
+  fallback: [
+    "system-ui",
+    "-apple-system",
+    "Segoe UI",
+    "Helvetica Neue",
+    "Arial",
+    "sans-serif",
+  ],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://homie.app"),
-  title: "Homie — A gentle check-in, when you need it",
+  metadataBase: new URL("https://meet-homie.vercel.app"),
+  title: "Homie — checks in, so you don't have to keep track",
   description:
-    "Homie is a wellbeing companion that shows up quietly — phone, watch, glasses — and asks one honest question. Warm, unhurried, never clinical.",
+    "Homie texts you every morning, notices the pattern between the weather, your sleep and how you feel, and turns ninety days of it into one page you hand your consultant.",
   applicationName: "Homie",
-  authors: [{ name: "Homie" }],
   keywords: [
-    "wellbeing",
-    "mental health companion",
-    "check-in",
-    "Homie",
-    "gentle",
+    "lupus",
+    "rheumatoid arthritis",
+    "chronic illness",
+    "symptom tracking",
+    "barometric pressure",
+    "rheumatology",
   ],
   icons: {
     icon: "/homie-logo.jpg",
     apple: "/homie-logo.jpg",
   },
   openGraph: {
-    title: "Homie — A gentle check-in, when you need it",
+    title: "Homie — checks in, so you don't have to keep track",
     description:
-      "A wellbeing companion that shows up quietly and asks one honest question. Warm cream is the canvas; terracotta is the only thing that ever asks to be tapped.",
+      "A text message every morning. Ninety days of it becomes one page you hand your consultant.",
     siteName: "Homie",
     type: "website",
-    images: [{ url: "/homie-logo.jpg", width: 512, height: 512, alt: "Homie" }],
+    images: [{ url: "/homie-logo.jpg", width: 448, height: 448, alt: "Homie" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Homie — A gentle check-in, when you need it",
+    title: "Homie — checks in, so you don't have to keep track",
     description:
-      "A wellbeing companion that shows up quietly and asks one honest question.",
+      "A text message every morning. Ninety days of it becomes one page you hand your consultant.",
     images: ["/homie-logo.jpg"],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FFF4EC",
+  themeColor: "#FBF4EA",
   width: "device-width",
   initialScale: 1,
 };
@@ -70,10 +74,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body
-        className={`${fredoka.variable} ${nunito.variable} ${jetbrainsMono.variable}`}
-      >
+    <html lang="en-GB">
+      <body className={`${fraunces.variable} ${nunitoSans.variable}`}>
         {children}
       </body>
     </html>
