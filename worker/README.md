@@ -11,7 +11,8 @@ Built:
   safety gates, structure it with the OpenAI Agents SDK, persist it, reply.
 - Send a message via Sendblue (`channels/sendblue.ts`).
 - Supabase Postgres for storage (`users`, `checkins`, `observations`,
-  `audit_log`, `webhook_events` — see `supabase/migrations/0001_init.sql`).
+  `audit_log`, `webhook_events` — schema lives in the repo-root
+  `supabase/migrations/`, shared with the Next.js routes).
 - Webhook replay guard: every delivery is claimed by dedupe key in
   `webhook_events` before any other write, so a Sendblue retry can't
   double-book a check-in or double-reply.
@@ -76,8 +77,10 @@ real Sendblue delivery.
 
 ## Database
 
-Run `supabase/migrations/0001_init.sql` against your Supabase project (SQL
-editor, or `supabase db push` if you're using the CLI with this repo linked).
+The schema is the repo-root `supabase/` project (`supabase db push`, or the
+SQL editor), shared with the Next.js API routes — this directory deliberately
+has no copy of its own. The worker needs `webhook_events`
+(`20260725191500_webhook_events.sql`) on top of the applied init schema.
 
 ## Deploy
 
