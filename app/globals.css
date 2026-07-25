@@ -554,3 +554,189 @@ img {
     break-inside: avoid;
   }
 }
+
+/* ==========================================================================
+   Landing structure — nav auth, proof, FAQ, footer columns, auth card
+   Apricot discipline: the header "Get started" is the single apricot element,
+   persistent at every scroll position. All other calls to action stay quiet.
+   ========================================================================== */
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-sm {
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 18px;
+}
+.site-nav + .header-actions {
+  margin-left: 16px;
+}
+
+/* Factual strip — not testimonials */
+.proof {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+.proof .item {
+  background: var(--milk);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card);
+  padding: 24px;
+}
+.proof .k {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.proof .v {
+  font-size: 18px;
+  color: var(--cocoa);
+}
+
+/* FAQ */
+.faq {
+  margin-top: 32px;
+  border-top: 1px solid var(--edge);
+}
+.faq details {
+  border-bottom: 1px solid var(--edge);
+}
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 22px 44px 22px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  position: relative;
+  min-height: var(--tap);
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: "+";
+  position: absolute;
+  right: 8px;
+  top: 20px;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--mushroom);
+}
+.faq details[open] summary::after {
+  content: "\2212";
+}
+.faq .a {
+  padding: 0 0 24px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--cocoa);
+  max-width: 70ch;
+}
+
+/* Footer columns */
+.foot-cols {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 28px;
+  padding-bottom: 32px;
+}
+.foot-cols h4 {
+  margin: 0 0 12px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.foot-cols ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.foot-cols li {
+  margin-bottom: 6px;
+}
+.foot-cols a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--cocoa);
+  font-size: 18px;
+}
+.foot-blurb {
+  font-size: 18px;
+  color: var(--cocoa);
+  max-width: 42ch;
+}
+
+/* Auth */
+.auth-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 64px 24px 96px;
+}
+.auth-card {
+  background: var(--milk);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card);
+  padding: 32px;
+}
+.auth-card h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.field {
+  display: block;
+  margin-top: 20px;
+}
+.field span {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.field input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 16px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--oat);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+}
+.field input:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 2px;
+}
+.auth-note {
+  margin-top: 20px;
+  font-size: 18px;
+  color: var(--mushroom);
+}
+
+@media (max-width: 900px) {
+  .proof {
+    grid-template-columns: 1fr;
+  }
+  .foot-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .foot-cols {
+    grid-template-columns: 1fr;
+  }
+  .header-actions .btn-sm.hide-sm {
+    display: none;
+  }
+}

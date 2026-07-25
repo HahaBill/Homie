@@ -67,6 +67,33 @@ const NEVER = [
   },
 ];
 
+const FAQ = [
+  {
+    q: "Do I have to download anything?",
+    a: "No. Homie is a text message. There is no app, no account to create, and no onboarding to get through. If you can reply to a text, you can use it.",
+  },
+  {
+    q: "What if I do not reply?",
+    a: "Nothing happens. There is no streak to break and no score to drop. If two mornings go unanswered Homie will offer to ring instead, and you can ignore that too.",
+  },
+  {
+    q: "Will it tell me to change my medication?",
+    a: "Never. Recommending a dose change is a clinician's decision and Homie does not make it. It records what you tell it and shows you the pattern; what to do about it is a conversation with your rheumatologist.",
+  },
+  {
+    q: "Where does the weather data come from?",
+    a: "Open-Meteo, using your area's barometric pressure. It is read automatically, so it is one less thing for you to write down.",
+  },
+  {
+    q: "What happens to what I write?",
+    a: "It is stored against your record and used to build your page. Texting STOP, DELETE or MY DATA takes effect immediately. Consent is explicit and timestamped, and you can withdraw it.",
+  },
+  {
+    q: "Can I show this to my doctor?",
+    a: "That is the point of it. The page is built to be printed and handed over at an appointment, with the pressure and symptom lines together and your own words quoted with their dates.",
+  },
+];
+
 export default function Home() {
   return (
     <>
@@ -81,6 +108,15 @@ export default function Home() {
             <a href="#page">The page</a>
             <a href="#trust">What it never does</a>
           </nav>
+          <div className="header-actions">
+            <a className="btn btn-quiet btn-sm hide-sm" href="/sign-in">
+              Sign in
+            </a>
+            {/* The single apricot element, persistent at every scroll position */}
+            <a className="btn btn-primary btn-sm" href="#how">
+              Get started
+            </a>
+          </div>
         </div>
       </header>
 
@@ -94,7 +130,7 @@ export default function Home() {
             into one page you hand your consultant.
           </p>
           <div className="hero-actions">
-            <a className="btn btn-primary" href="#how">
+            <a className="btn btn-quiet" href="#how">
               See how it works
             </a>
             <a className="btn btn-quiet" href="#page">
@@ -104,6 +140,27 @@ export default function Home() {
           <p className="hero-note">
             No app to download. No account. It arrives as a text message.
           </p>
+
+          <div className="proof">
+            <div className="item">
+              <div className="k">Every morning</div>
+              <p className="v">
+                One message, at a time you choose. Missing it costs you nothing.
+              </p>
+            </div>
+            <div className="item">
+              <div className="k">90 days</div>
+              <p className="v">
+                Becomes a single page, plotted and quoted, ready to print.
+              </p>
+            </div>
+            <div className="item">
+              <div className="k">No account</div>
+              <p className="v">
+                Nothing to install, no sign-up, no onboarding to get through.
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* The problem */}
@@ -340,6 +397,21 @@ export default function Home() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq" className="section wrap">
+          <p className="label">Questions</p>
+          <h2 className="h2">The things people ask first.</h2>
+
+          <div className="faq">
+            {FAQ.map((f) => (
+              <details key={f.q}>
+                <summary>{f.q}</summary>
+                <p className="a">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         {/* Close */}
         <section className="section wrap">
           <h2 className="h2">
@@ -347,17 +419,72 @@ export default function Home() {
             asks.
           </h2>
           <div className="hero-actions" style={{ marginTop: 28 }}>
-            <a className="btn btn-primary" href="#top">
-              Start with one message
+            <a className="btn btn-quiet" href="#how">
+              See how it works
+            </a>
+            <a className="btn btn-quiet" href="/sign-in">
+              Get to your page
             </a>
           </div>
         </section>
       </main>
 
       <footer className="site-footer">
-        <div className="wrap inner">
-          <span>Homie &middot; a gentle record between appointments</span>
-          <span>Homie is not a medical device and does not give medical advice.</span>
+        <div className="wrap">
+          <div className="foot-cols">
+            <div>
+              <h4>Homie</h4>
+              <p className="foot-blurb">
+                A gentle record between appointments. Homie notices the pattern,
+                and hands it to you and your own clinician.
+              </p>
+            </div>
+            <div>
+              <h4>Product</h4>
+              <ul>
+                <li>
+                  <a href="#how">How it works</a>
+                </li>
+                <li>
+                  <a href="#thread">The thread</a>
+                </li>
+                <li>
+                  <a href="#page">The page</a>
+                </li>
+                <li>
+                  <a href="#faq">Questions</a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4>Trust</h4>
+              <ul>
+                <li>
+                  <a href="#trust">What it never does</a>
+                </li>
+                <li>
+                  <a href="#trust">Emergencies</a>
+                </li>
+                <li>
+                  <a href="/sign-in">Your data</a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4>Account</h4>
+              <ul>
+                <li>
+                  <a href="/sign-in">Sign in</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="inner" style={{ borderTop: "1px solid var(--edge)", paddingTop: 20 }}>
+            <span>Homie &middot; built at the Consumer Health Hackathon</span>
+            <span>
+              Homie is not a medical device and does not give medical advice.
+            </span>
+          </div>
         </div>
       </footer>
     </>
