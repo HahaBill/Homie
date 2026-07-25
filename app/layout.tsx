@@ -47,7 +47,7 @@ export const metadata: Metadata = {
       "A wellbeing companion that shows up quietly and asks one honest question. Warm cream is the canvas; terracotta is the only thing that ever asks to be tapped.",
     siteName: "Homie",
     type: "website",
-    images: [{ url: "/homie-logo.png", width: 1235, height: 1235, alt: "Homie" }],
+    images: [{ url: "/homie-logo.png", width: 512, height: 512, alt: "Homie" }],
   },
   twitter: {
     card: "summary_large_image",
