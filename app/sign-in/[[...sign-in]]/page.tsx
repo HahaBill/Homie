@@ -4,7 +4,7 @@ import SignInCard from "./SignInCard";
 export const metadata: Metadata = {
   title: "Sign in — Homie",
   description:
-    "Homie texts you a code. There is no password to remember and nothing to install.",
+    "Homie emails you a code. There is no password to remember and nothing to install.",
 };
 
 export default function SignInPage() {

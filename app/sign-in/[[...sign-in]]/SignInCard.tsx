@@ -5,27 +5,22 @@ import { useRouter } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 
 /**
- * The Homie sign-in card, made real with Clerk's phone_code strategy.
+ * The Homie sign-in card, on Clerk's email_code strategy.
  *
- * One card handles both sign-in and first visit: an unknown number falls
+ * One card handles both sign-in and first visit: an unknown email falls
  * through to sign-up transparently, because PRD §3 forbids a separate
- * onboarding flow. No password exists anywhere. The texted code is the
+ * onboarding flow. No password exists anywhere — the emailed code is the
  * whole ceremony.
  *
- * Design rules in force (PRD §13): one apricot element per screen state,
- * 18px floor, 52px targets, no exclamation marks anywhere in copy.
+ * Phone-code sign-in is parked, deliberately: email is what the Clerk
+ * instance has enabled today, and the thread itself still runs on the
+ * phone number. When phone auth returns, this card grows a second path
+ * rather than a second page. Note the join consequence meanwhile: the
+ * live thread keys on users.phone, so an email-only session browses the
+ * demo week until a phone number lands on the account.
  */
 
-type Stage = "number" | "code";
-
-/** UK-friendly E.164 normalisation: "07466 503629" → "+447466503629". */
-function toE164(raw: string): string {
-  const digits = raw.replace(/[^\d+]/g, "");
-  if (digits.startsWith("+")) return digits;
-  if (digits.startsWith("07")) return `+44${digits.slice(1)}`;
-  if (digits.startsWith("44")) return `+${digits}`;
-  return digits ? `+${digits}` : "";
-}
+type Stage = "email" | "code";
 
 export default function SignInCard() {
   const router = useRouter();
@@ -33,8 +28,8 @@ export default function SignInCard() {
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveFromSignUp } =
     useSignUp();
 
-  const [stage, setStage] = useState<Stage>("number");
-  const [phone, setPhone] = useState("");
+  const [stage, setStage] = useState<Stage>("email");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -46,28 +41,28 @@ export default function SignInCard() {
   async function requestCode(e: React.FormEvent) {
     e.preventDefault();
     if (!ready || busy) return;
-    const number = toE164(phone);
-    if (number.length < 10) {
-      setNotice("That number does not look complete — have another look.");
+    const address = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setNotice("That address does not look complete — have another look.");
       return;
     }
     setBusy(true);
     setNotice(null);
     try {
-      // Known number → sign in.
-      const attempt = await signIn.create({ identifier: number });
+      // Known address → sign in.
+      const attempt = await signIn.create({ identifier: address });
       const factor = attempt.supportedFirstFactors?.find(
-        (f) => f.strategy === "phone_code",
+        (f) => f.strategy === "email_code",
       );
-      if (!factor || !("phoneNumberId" in factor)) {
+      if (!factor || !("emailAddressId" in factor)) {
         setNotice(
-          "This account cannot sign in with a texted code. Contact us and we will sort it.",
+          "This account cannot sign in with an emailed code. Contact us and we will sort it.",
         );
         return;
       }
       await signIn.prepareFirstFactor({
-        strategy: "phone_code",
-        phoneNumberId: factor.phoneNumberId,
+        strategy: "email_code",
+        emailAddressId: factor.emailAddressId,
       });
       setMode("signIn");
       setStage("code");
@@ -75,9 +70,9 @@ export default function SignInCard() {
       if (isClerkError(err, "form_identifier_not_found")) {
         // First visit → create the account from the same card, quietly.
         try {
-          await signUp.create({ phoneNumber: number });
-          await signUp.preparePhoneNumberVerification({
-            strategy: "phone_code",
+          await signUp.create({ emailAddress: address });
+          await signUp.prepareEmailAddressVerification({
+            strategy: "email_code",
           });
           setMode("signUp");
           setStage("code");
@@ -100,7 +95,7 @@ export default function SignInCard() {
     try {
       if (mode === "signIn") {
         const result = await signIn.attemptFirstFactor({
-          strategy: "phone_code",
+          strategy: "email_code",
           code: code.trim(),
         });
         if (result.status === "complete") {
@@ -109,7 +104,7 @@ export default function SignInCard() {
           return;
         }
       } else {
-        const result = await signUp.attemptPhoneNumberVerification({
+        const result = await signUp.attemptEmailAddressVerification({
           code: code.trim(),
         });
         if (result.status === "complete") {
@@ -118,7 +113,7 @@ export default function SignInCard() {
           return;
         }
       }
-      setNotice("That code did not match. Check the text and try again.");
+      setNotice("That code did not match. Check the email and try again.");
     } catch (err: unknown) {
       setNotice(clerkMessage(err));
     } finally {
@@ -128,36 +123,36 @@ export default function SignInCard() {
 
   return (
     <div className="auth-card">
-      {stage === "number" ? (
+      {stage === "email" ? (
         <>
           <h1>Get to your page</h1>
           <p className="lede" style={{ fontSize: 18 }}>
-            Homie texts you a code. There is no password to remember and
+            Homie emails you a code. There is no password to remember and
             nothing to install.
           </p>
 
           <form onSubmit={requestCode}>
-            <label className="field" htmlFor="phone">
-              <span>Your mobile number</span>
+            <label className="field" htmlFor="email">
+              <span>Your email</span>
               <input
-                id="phone"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="07700 900000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                aria-describedby="phone-help"
+                id="email"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-describedby="email-help"
                 disabled={busy}
               />
             </label>
 
-            <p id="phone-help" className="auth-note">
-              We use your number to find your record and to send the code. It
-              is never shared, and texting <strong>STOP</strong>,{" "}
-              <strong>DELETE</strong> or <strong>MY DATA</strong> works at any
-              time.
+            <p id="email-help" className="auth-note">
+              We use your email to sign you in — nothing else. The thread
+              itself still runs on your phone, where texting{" "}
+              <strong>STOP</strong>, <strong>DELETE</strong> or{" "}
+              <strong>MY DATA</strong> works at any time.
             </p>
 
             {/* Clerk bot-protection mounts here during sign-up. */}
@@ -175,21 +170,21 @@ export default function SignInCard() {
                 type="submit"
                 disabled={!ready || busy}
               >
-                {busy ? "Sending…" : "Text me a code"}
+                {busy ? "Sending…" : "Email me a code"}
               </button>
             </div>
           </form>
         </>
       ) : (
         <>
-          <h1>Check your texts</h1>
+          <h1>Check your inbox</h1>
           <p className="lede" style={{ fontSize: 18 }}>
-            A code is on its way to {toE164(phone)}. No rush.
+            A code is on its way to {email.trim().toLowerCase()}. No rush.
           </p>
 
           <form onSubmit={submitCode}>
             <label className="field" htmlFor="code">
-              <span>The code from the text</span>
+              <span>The code from the email</span>
               <input
                 id="code"
                 name="code"
@@ -222,12 +217,12 @@ export default function SignInCard() {
                 type="button"
                 disabled={busy}
                 onClick={() => {
-                  setStage("number");
+                  setStage("email");
                   setCode("");
                   setNotice(null);
                 }}
               >
-                Use a different number
+                Use a different email
               </button>
             </div>
           </form>
