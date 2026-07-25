@@ -1060,11 +1060,15 @@ img {
 
 /* Sign-in layout — card + the watching tile. */
 .auth-layout {
-  max-width: 940px;
+  max-width: 1060px;
   margin: 0 auto;
   padding: 64px 24px 96px;
   display: grid;
-  grid-template-columns: minmax(0, 520px) 280px;
+  /* The tile is a square, so its column width is also its height. At 280px
+     it read as a thumbnail pinned beside a much taller card; 420px puts the
+     two surfaces on roughly equal footing. Both columns are minmax(0, …) so
+     neither can push the grid past max-width and force a horizontal scroll. */
+  grid-template-columns: minmax(0, 520px) minmax(0, 420px);
   gap: 48px;
   align-items: center;
   justify-content: center;
@@ -1072,7 +1076,10 @@ img {
 .watch-tile {
   position: relative;
   width: 100%;
-  max-width: 280px;
+  /* Must track the grid column: the pupils are positioned in percentages of
+     this box, so the tile has to stay exactly as wide as the image it wraps
+     or the eyes drift off the face. */
+  max-width: 420px;
   border-radius: 32px;
   overflow: hidden;
   background: var(--milk);
