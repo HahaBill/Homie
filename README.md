@@ -2,6 +2,8 @@
 
 > A gentle check-in. When you need it.
 
+**Live:** https://meet-homie.vercel.app
+
 Landing page for **Homie** — a wellbeing companion that shows up quietly
 (phone, watch, glasses) and asks one honest question. Built with Next.js and
 the **Homie Design System v2 (Core colorway)**.
