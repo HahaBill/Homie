@@ -3,6 +3,8 @@
    Constraints honoured: one apricot element per screen, alert red only on the
    999 path, no gradients, no glass, no shadows, no emoji, no exclamation marks. */
 
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
 /* Three weeks of daily readings. Pressure drops lead symptom rises by ~a day.
    Plotted as inline SVG so it renders without JS and prints as vector. */
 const PRESSURE = [
@@ -109,9 +111,17 @@ export default function Home() {
             <a href="#trust">What it never does</a>
           </nav>
           <div className="header-actions">
-            <a className="btn btn-quiet btn-sm hide-sm" href="/sign-in">
-              Sign in
-            </a>
+            <SignedOut>
+              <a className="btn btn-quiet btn-sm hide-sm" href="/sign-in">
+                Sign in
+              </a>
+            </SignedOut>
+            <SignedIn>
+              <a className="btn btn-quiet btn-sm hide-sm" href="/sign-in">
+                Your page
+              </a>
+              <UserButton />
+            </SignedIn>
             {/* The single apricot element, persistent at every scroll position */}
             <a className="btn btn-primary btn-sm" href="#how">
               Get started

@@ -1,3 +1,4 @@
+import {ClerkProvider} from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Nunito_Sans } from "next/font/google";
 import "./globals.css";
@@ -76,7 +77,9 @@ export default function RootLayout({
   return (
     <html lang="en-GB">
       <body className={`${fraunces.variable} ${nunitoSans.variable}`}>
-        {children}
+        <ClerkProvider>
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
