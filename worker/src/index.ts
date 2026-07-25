@@ -11,6 +11,7 @@ import {
   STOP_RESPONSE,
   type SafetyCommand,
 } from "./safety";
+import { linkProblemHtml, reportHtml } from "./report";
 import {
   claimWebhookEvent,
   closeCheckinWithReply,
@@ -20,10 +21,12 @@ import {
   findOrCreateUserByPhone,
   getDataSummary,
   getOpenCheckin,
+  getReportPayload,
   insertAuditLog,
   insertObservation,
   setUserStatus,
 } from "./supabase";
+import { mintReportToken, verifyReportToken } from "./token";
 import { normalizePhone, type User } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -98,6 +101,27 @@ const FIRST_CONTACT_WINDOW_MS = 10_000;
 
 function isFirstContact(user: User): boolean {
   return Date.now() - new Date(user.created_at).getTime() < FIRST_CONTACT_WINDOW_MS;
+}
+
+/** Report links expire in 72h — same default as the Next.js /api/links route. */
+const REPORT_TTL_SECONDS = 72 * 60 * 60;
+
+/**
+ * A signed link to her page, when she asked for one and links are configured.
+ * Never fails the reply: a minting problem degrades to a link-less reply.
+ */
+async function maybeReportUrl(env: Env, origin: string, userId: string, wanted: boolean): Promise<string | null> {
+  if (!wanted) return null;
+  if (!env.LINK_SIGNING_SECRET) {
+    log({ event: "report_link_unavailable", reason: "LINK_SIGNING_SECRET unset" });
+    return null;
+  }
+  try {
+    return `${origin}/r/${await mintReportToken(env, userId, REPORT_TTL_SECONDS)}`;
+  } catch (err) {
+    log({ event: "report_link_unavailable", reason: String(err) });
+    return null;
+  }
 }
 
 /**
@@ -182,6 +206,12 @@ async function handleInboundMessage(
 
     const parsed = await parsePromise;
     const withGreeting = parsed.is_introduction || isFirstContact(user);
+    const reportUrl = await maybeReportUrl(env, origin, user.id, parsed.wants_report);
+    const auditIssue = reportUrl
+      ? insertAuditLog(env, user.id, "report_link_issued", { ttl_seconds: REPORT_TTL_SECONDS }).catch((err) =>
+          log({ event: "audit_failed", user_id: user.id, error: String(err) })
+        )
+      : Promise.resolve();
 
     // The send is what she's actually waiting on, so it still starts alongside
     // the observation write — but the two settle independently. Under
@@ -190,12 +220,13 @@ async function handleInboundMessage(
     // and skipped its reply_sent audit entry.
     const [sendResult, persistResult] = await Promise.allSettled([
       sendblueAdapter.send(env, sender, {
-        text: parsed.reply_text,
+        text: reportUrl ? `${parsed.reply_text}\n\n${reportUrl}` : parsed.reply_text,
         ...(withGreeting ? { media_url: `${origin}${GREETING_IMAGE_PATH}` } : {}),
       }),
       insertObservation(env, checkin.id, parsed),
     ]);
     await auditInbound;
+    await auditIssue;
 
     if (persistResult.status === "rejected") {
       log({
@@ -379,13 +410,61 @@ app.post("/chat", async (c) => {
     log({ event: "web_chat_reply", user_id: user.id, checkin_id: checkin.id });
 
     const withGreeting = parsed.is_introduction || isFirstContact(user);
+    const reportUrl = await maybeReportUrl(c.env, new URL(c.req.url).origin, user.id, parsed.wants_report);
+    if (reportUrl) {
+      c.executionCtx.waitUntil(
+        insertAuditLog(c.env, user.id, "report_link_issued", {
+          ttl_seconds: REPORT_TTL_SECONDS,
+          channel: "web",
+        }).catch((err) => log({ event: "audit_failed", user_id: user.id, error: String(err) }))
+      );
+    }
     return c.json({
       reply: parsed.reply_text,
       ...(withGreeting ? { image_url: `${new URL(c.req.url).origin}${GREETING_IMAGE_PATH}` } : {}),
+      ...(reportUrl ? { report_url: reportUrl } : {}),
     });
   } catch (err) {
     log({ event: "web_chat_failed", error: err instanceof Error ? err.message : String(err) });
     return c.json({ error: "chat failed" }, 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The page (docs/ARCHITECTURE.md): pre-rendered report at a signed link.
+// Token verification happens before any storage read, the user row is
+// re-checked so STOP / DELETE kill outstanding links, and responses carrying
+// patient data are never cacheable by anything shared.
+// ---------------------------------------------------------------------------
+
+app.get("/r/:token", async (c) => {
+  const noStore = { "Cache-Control": "private, no-store" };
+  try {
+    if (!c.env.LINK_SIGNING_SECRET) return c.html(linkProblemHtml("malformed"), 404, noStore);
+
+    const check = await verifyReportToken(c.env, c.req.param("token"));
+    if (!check.ok) {
+      log({ event: "report_link_rejected", reason: check.reason });
+      return c.html(linkProblemHtml(check.reason), check.reason === "expired" ? 410 : 404, noStore);
+    }
+
+    const data = await getReportPayload(c.env, check.userId);
+    if (!data || data.user.status !== "active") {
+      log({ event: "report_link_rejected", reason: "revoked" });
+      return c.html(linkProblemHtml("revoked"), 410, noStore);
+    }
+
+    c.executionCtx.waitUntil(
+      insertAuditLog(c.env, data.user.id, "report_viewed", {}).catch((err) =>
+        log({ event: "audit_failed", user_id: data.user.id, error: String(err) })
+      )
+    );
+    return c.html(reportHtml(data, check.exp), 200, noStore);
+  } catch (err) {
+    // The page is the demo — a storage blip renders as a calm styled retry
+    // page, never a bare 500.
+    log({ event: "report_render_failed", error: err instanceof Error ? err.message : String(err) });
+    return c.html(linkProblemHtml("error"), 500, noStore);
   }
 });
 

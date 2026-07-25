@@ -16,6 +16,13 @@ export interface Env {
   WORKER_ADMIN_TOKEN?: string;
 
   /**
+   * HMAC key for report-link tokens — must equal the Next.js app's
+   * LINK_SIGNING_SECRET so links minted by either side verify here (same
+   * format as lib/server/token.ts). Unset = report links silently disabled.
+   */
+  LINK_SIGNING_SECRET?: string;
+
+  /**
    * Set to "1" to store raw inbound message text in audit_log. Off by default:
    * that text is health data, and audit_log is insert-only (PRD §8) with
    * erasure limited to dropping the user_id link, so anything written here

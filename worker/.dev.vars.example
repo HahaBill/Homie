@@ -13,3 +13,8 @@ OPENAI_API_KEY=
 
 # Shared secret required by POST /send-test. Leave unset to disable the route.
 WORKER_ADMIN_TOKEN=
+
+# HMAC key for report-link tokens — must equal the Next.js app's
+# LINK_SIGNING_SECRET so links minted by either side verify on /r/:token.
+# Leave unset to disable report links.
+LINK_SIGNING_SECRET=

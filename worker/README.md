@@ -63,6 +63,7 @@ and `wrangler secret put <NAME>` for production:
 | `SENDBLUE_WEBHOOK_SECRET` | Account-level "global" signing secret, checked against the `sb-signing-secret` header |
 | `OPENAI_API_KEY` | Reply structuring |
 | `WORKER_ADMIN_TOKEN` | Bearer token for `POST /send-test`. Leave unset to disable the route entirely |
+| `LINK_SIGNING_SECRET` | HMAC key for `/r/:token` report links — must equal the Next.js app's value so links minted by either side verify. Unset = report links disabled |
 
 ## Local dev
 

@@ -53,6 +53,8 @@ export type ParsedReply = {
   reply_text: string;
   /** True when the message asks who/what Homie is, or reads like a first hello — triggers the greeting image. */
   is_introduction: boolean;
+  /** True when they're asking to see their report/progress/trends — triggers a signed report link. */
+  wants_report: boolean;
 };
 
 /**
