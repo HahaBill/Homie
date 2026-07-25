@@ -51,7 +51,17 @@ create table if not exists audit_log (
   created_at timestamptz not null default now()
 );
 
+-- Webhook replay guard: Sendblue retries deliveries, so the worker claims
+-- each one here (plain insert; primary-key conflict = duplicate, skip) before
+-- writing anything else. Append-only and tiny — prune later if it ever
+-- matters. Service-role only: RLS enabled below with no policies.
+create table if not exists webhook_events (
+  dedupe_key text primary key,
+  received_at timestamptz not null default now()
+);
+
 alter table users enable row level security;
+alter table webhook_events enable row level security;
 alter table checkins enable row level security;
 alter table observations enable row level security;
 alter table audit_log enable row level security;

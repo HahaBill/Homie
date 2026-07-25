@@ -3,15 +3,23 @@
   "name": "homie-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Wrangler doesn't minify by default; with the Agents SDK in the bundle the
+  // un-minified eval cost shows up directly as cold-start time.
+  "minify": true,
   "observability": { "enabled": true },
 
   // No Durable Objects yet — deliberate, see docs/ARCHITECTURE.md. Supabase is
   // the store for this slice; a PATIENT-style DO can be reintroduced later for
   // contextual/session state without touching the Sendblue adapter.
 
+  // nodejs_compat is required by @openai/agents on Workers (node:async_hooks,
+  // node:events, node:crypto, node:stream) — see its own troubleshooting guide's
+  // "Cloudflare Workers" section, which lists this as a documented requirement.
+
   "vars": {
     "OPENAI_MODEL": "gpt-5.4-mini",
-    "SENDBLUE_FROM_NUMBER": "",
+    "SENDBLUE_FROM_NUMBER": "+18722964991",
     "SKIP_SENDBLUE_VERIFY": "0"
   }
 

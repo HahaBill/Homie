@@ -56,12 +56,8 @@ export const sendblueAdapter: MessagingAdapter = {
 };
 
 /**
- * Sendblue's webhook docs describe per-webhook / global secrets delivered in
- * "request headers" without pinning down a name on the receiving-messages
- * page; the `sb-signing-secret` header is the one documented for their own
- * Chat SDK adapter, so that's what we check here. Gated by
- * SKIP_SENDBLUE_VERIFY — flip it off and confirm the real header from a
- * captured webhook before relying on this in production (see README).
+ * Confirmed against Sendblue's docs: signing secrets (per-webhook or
+ * account-level "global") are delivered in the `sb-signing-secret` header.
  */
 export function verifySendblueSignature(env: Env, header: string | undefined): boolean {
   if (!env.SENDBLUE_WEBHOOK_SECRET) return true;

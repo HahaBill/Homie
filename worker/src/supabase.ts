@@ -33,17 +33,32 @@ function orThrow<T>(data: T | null, error: { message: string } | null, context: 
  */
 export async function findOrCreateUserByPhone(env: Env, phone: string): Promise<User> {
   const db = client(env);
-
-  const { data: existing, error: findError } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
-  if (findError) throw new Error(`findOrCreateUserByPhone (lookup): ${findError.message}`);
-  if (existing) return existing as User;
-
-  const { data: created, error: insertError } = await db
+  // Upsert: one round trip instead of select-then-insert, and race-safe —
+  // two concurrent first-contact webhooks both land on the same row instead
+  // of one losing the insert race. The conflict "update" writes phone back
+  // to itself and touches no other column.
+  const { data, error } = await db
     .from("users")
-    .insert({ phone })
+    .upsert({ phone }, { onConflict: "phone" })
     .select("*")
     .single();
-  return orThrow(created as User | null, insertError, "findOrCreateUserByPhone (insert)");
+  return orThrow(data as User | null, error, "findOrCreateUserByPhone");
+}
+
+/**
+ * Webhook replay guard. Sendblue retries deliveries; the first insert of a
+ * dedupe key wins and every later one hits the primary key and returns
+ * false. Callers claim before writing anything else so a retry can never
+ * double-book a check-in or double-reply.
+ */
+export async function claimWebhookEvent(env: Env, dedupeKey: string): Promise<boolean> {
+  const db = client(env);
+  const { error } = await db.from("webhook_events").insert({ dedupe_key: dedupeKey });
+  if (error) {
+    if (error.code === "23505") return false;
+    throw new Error(`claimWebhookEvent: ${error.message}`);
+  }
+  return true;
 }
 
 /** Most recent checkin awaiting a reply, if any. */
@@ -141,25 +156,20 @@ export type DataSummary = {
 /** Powers the MY DATA reply — a plain summary of what Homie holds, computed live rather than from a stale export. */
 export async function getDataSummary(env: Env, user: User): Promise<DataSummary> {
   const db = client(env);
-  const { count, error: countError } = await db
+  // One round trip: `count: "exact"` reports the full match set while the
+  // ascending order + limit(1) returns just the earliest row.
+  const { data, count, error } = await db
     .from("checkins")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
-  if (countError) throw new Error(`getDataSummary (count): ${countError.message}`);
-
-  const { data: earliest, error: earliestError } = await db
-    .from("checkins")
-    .select("sent_at")
+    .select("sent_at", { count: "exact" })
     .eq("user_id", user.id)
     .order("sent_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (earliestError) throw new Error(`getDataSummary (earliest): ${earliestError.message}`);
+    .limit(1);
+  if (error) throw new Error(`getDataSummary: ${error.message}`);
 
   return {
     phone: user.phone,
     consent_at: user.consent_at,
     checkins_count: count ?? 0,
-    first_checkin_at: (earliest as { sent_at: string } | null)?.sent_at ?? null,
+    first_checkin_at: (data?.[0] as { sent_at: string } | undefined)?.sent_at ?? null,
   };
 }

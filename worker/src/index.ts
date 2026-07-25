@@ -12,6 +12,7 @@ import {
   type SafetyCommand,
 } from "./safety";
 import {
+  claimWebhookEvent,
   closeCheckinWithReply,
   createAdHocCheckin,
   deleteUserData,
@@ -27,9 +28,9 @@ import { normalizePhone, type User } from "./types";
 const app = new Hono<{ Bindings: Env }>();
 
 function log(fields: Record<string, unknown>): void {
-  // Structured, content-free-where-possible logs — see the sender/text fields
-  // below, which are the one deliberate exception (needed to debug delivery
-  // during the hackathon build) and should be dropped before real users are live.
+  // Structured, content-free-where-possible logs — audit_log carries the one
+  // deliberate full-text exception (needed to debug delivery during the
+  // hackathon build); drop it before real users are live.
   console.log(JSON.stringify(fields));
 }
 
@@ -70,38 +71,80 @@ app.post("/webhooks/sendblue", async (c) => {
   log({ event: "webhook_received", provider: "sendblue", sender, message_handle: payload.message_handle ?? null });
 
   // Acknowledge Sendblue immediately; do the actual work after responding.
-  c.executionCtx.waitUntil(handleInboundMessage(c.env, sender, text));
+  c.executionCtx.waitUntil(handleInboundMessage(c.env, sender, text, payload.message_handle));
 
   return c.json({ received: true });
 });
 
 /**
- * The one inbound pipeline. Order is deliberate and safety-critical:
- *   1. resolve the user (cheap read/write, not a "model path" concern)
- *   2. red-flag bypass                         — PRD §7.1, before any model call
- *   3. STOP / DELETE / MY DATA fixed responses  — PRD §7.3, also before any model call
- *   4. normal flow: structure the reply via OpenAI, persist, reply
+ * The one inbound pipeline. Ordering is deliberate on two axes at once —
+ * safety and latency:
+ *
+ *   1. red-flag bypass         — pure string check, zero I/O (PRD §7.1)
+ *   2. STOP / DELETE / MY DATA — fixed responses, still no model call (§7.3)
+ *   3. normal flow             — the model call is the long pole (~1–2.5s
+ *      measured), so it starts at t=0 and every Supabase round trip runs
+ *      underneath it; the reply is sent before the observation is persisted,
+ *      because the send is the part the user is actually waiting on.
  */
-async function handleInboundMessage(env: Env, sender: string, text: string): Promise<void> {
+async function handleInboundMessage(
+  env: Env,
+  sender: string,
+  text: string,
+  providerMessageId?: string
+): Promise<void> {
   try {
-    const user = await findOrCreateUserByPhone(env, sender);
-    await insertAuditLog(env, user.id, "inbound_received", { text });
-
+    // Red-flag bypass runs ahead of everything that can fail: the 999
+    // guidance must go out even if Supabase or OpenAI are down, so it
+    // deliberately skips the dedupe claim too — a Sendblue retry re-sending
+    // the safety message is the acceptable failure mode; not sending it
+    // because the database hiccuped is not.
     if (isRedFlag(text)) {
-      await sendblueAdapter.send(env, sender, { text: RED_FLAG_RESPONSE });
-      await insertAuditLog(env, user.id, "red_flag_bypass", { text });
-      log({ event: "red_flag_bypass", user_id: user.id });
+      const audit = (async () => {
+        const user = await findOrCreateUserByPhone(env, sender);
+        await insertAuditLog(env, user.id, "red_flag_bypass", { text });
+      })().catch((err) => log({ event: "red_flag_audit_failed", error: String(err) }));
+      const result = await sendblueAdapter.send(env, sender, { text: RED_FLAG_RESPONSE });
+      log({ event: "red_flag_bypass", status: result.status });
+      await audit;
       return;
     }
 
+    const dedupeKey = providerMessageId
+      ? `sendblue:${providerMessageId}`
+      : `sendblue:${sender}:${text}:${utcMinute()}`;
+
     const command = classifyCommand(text);
     if (command) {
+      if (!(await claimWebhookEvent(env, dedupeKey))) {
+        log({ event: "webhook_duplicate", dedupe_key: dedupeKey });
+        return;
+      }
+      const user = await findOrCreateUserByPhone(env, sender);
       await handleSafetyCommand(env, user, command, sender);
       return;
     }
 
+    // Normal flow. Start the model call first — everything below happens
+    // while it runs.
+    const parsePromise = parseAndComposeReply(env, text);
+    parsePromise.catch(() => {}); // bail-out paths below must not leave an unhandled rejection
+
+    if (!(await claimWebhookEvent(env, dedupeKey))) {
+      // A duplicate burns one abandoned model call; retries are rare enough
+      // that this beats putting the claim's round trip ahead of the model.
+      log({ event: "webhook_duplicate", dedupe_key: dedupeKey });
+      return;
+    }
+
+    const user = await findOrCreateUserByPhone(env, sender);
+    const auditInbound = insertAuditLog(env, user.id, "inbound_received", { text }).catch((err) =>
+      log({ event: "audit_failed", user_id: user.id, error: String(err) })
+    );
+
     if (user.status !== "active") {
       log({ event: "inbound_ignored", reason: "user_not_active", status: user.status, user_id: user.id });
+      await auditInbound;
       return;
     }
 
@@ -110,10 +153,15 @@ async function handleInboundMessage(env: Env, sender: string, text: string): Pro
       ? await closeCheckinWithReply(env, open.id, text)
       : await createAdHocCheckin(env, user.id, text);
 
-    const parsed = await parseAndComposeReply(env, text);
-    await insertObservation(env, checkin.id, parsed);
+    const parsed = await parsePromise;
 
-    const result = await sendblueAdapter.send(env, sender, { text: parsed.reply_text });
+    // Reply first, persist alongside.
+    const [result] = await Promise.all([
+      sendblueAdapter.send(env, sender, { text: parsed.reply_text }),
+      insertObservation(env, checkin.id, parsed),
+      auditInbound,
+    ]);
+
     await insertAuditLog(env, user.id, "reply_sent", { checkin_id: checkin.id, status: result.status });
     log({ event: "inbound_reply_sent", user_id: user.id, checkin_id: checkin.id, status: result.status });
   } catch (err) {
@@ -123,8 +171,10 @@ async function handleInboundMessage(env: Env, sender: string, text: string): Pro
 
 async function handleSafetyCommand(env: Env, user: User, command: SafetyCommand, sender: string): Promise<void> {
   if (command === "stop") {
-    await setUserStatus(env, user.id, "stopped");
-    await sendblueAdapter.send(env, sender, { text: STOP_RESPONSE });
+    await Promise.all([
+      setUserStatus(env, user.id, "stopped"),
+      sendblueAdapter.send(env, sender, { text: STOP_RESPONSE }),
+    ]);
     await insertAuditLog(env, user.id, "stop", {});
     log({ event: "safety_command", command, user_id: user.id });
     return;
@@ -132,17 +182,31 @@ async function handleSafetyCommand(env: Env, user: User, command: SafetyCommand,
 
   if (command === "delete") {
     const summary = await getDataSummary(env, user);
-    await sendblueAdapter.send(env, sender, { text: DELETE_RESPONSE });
-    await insertAuditLog(env, user.id, "delete", { checkins_deleted: summary.checkins_count });
+    // Audit strictly before the delete: the row's user_id must still exist at
+    // insert time (it becomes NULL afterwards via ON DELETE SET NULL).
+    await Promise.all([
+      sendblueAdapter.send(env, sender, { text: DELETE_RESPONSE }),
+      insertAuditLog(env, user.id, "delete", { checkins_deleted: summary.checkins_count }),
+    ]);
     await deleteUserData(env, user.id);
     log({ event: "safety_command", command, user_id: user.id, checkins_deleted: summary.checkins_count });
     return;
   }
 
   const summary = await getDataSummary(env, user);
-  await sendblueAdapter.send(env, sender, { text: myDataResponseText(summary) });
-  await insertAuditLog(env, user.id, "my_data_request", {});
+  await Promise.all([
+    sendblueAdapter.send(env, sender, { text: myDataResponseText(summary) }),
+    insertAuditLog(env, user.id, "my_data_request", {}),
+  ]);
   log({ event: "safety_command", command, user_id: user.id });
+}
+
+/**
+ * Fallback dedupe bucket when Sendblue omits message_handle: the same
+ * sender+text within the same UTC minute collapses to one delivery.
+ */
+function utcMinute(): string {
+  return new Date().toISOString().slice(0, 16);
 }
 
 // ---------------------------------------------------------------------------

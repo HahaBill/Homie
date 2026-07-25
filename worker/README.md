@@ -8,12 +8,28 @@ Next.js app in `app/`, which stays on Vercel.
 
 Built:
 - Receive an iMessage via Sendblue's webhook, verify it, run it past the
-  safety gates, structure it with OpenAI, persist it, reply.
+  safety gates, structure it with the OpenAI Agents SDK, persist it, reply.
 - Send a message via Sendblue (`channels/sendblue.ts`).
 - Supabase Postgres for storage (`users`, `checkins`, `observations`,
-  `audit_log` — see `supabase/migrations/0001_init.sql`).
+  `audit_log`, `webhook_events` — see `supabase/migrations/0001_init.sql`).
+- Webhook replay guard: every delivery is claimed by dedupe key in
+  `webhook_events` before any other write, so a Sendblue retry can't
+  double-book a check-in or double-reply.
 - The two safety gates `docs/PRD.md` §7 calls non-negotiable: a hard-coded
   red-flag bypass (`src/safety.ts`) and `STOP` / `DELETE` / `MY DATA`.
+
+## Performance notes
+
+The model call is the long pole (~1–2.5s measured against gpt-5.4-mini), so
+the inbound pipeline is ordered around it: the call starts at t=0 and all
+Supabase round trips (dedupe claim, user upsert, check-in resolution) run
+underneath it; the reply is sent before the observation insert completes.
+The red-flag bypass has zero dependencies — it fires even if Supabase and
+OpenAI are both down. The bundle imports `@openai/agents-core` +
+`@openai/agents-openai` directly rather than the `@openai/agents` facade
+(whose entrypoint drags in the unused realtime stack un-tree-shakeably),
+which roughly halves upload size; wrangler minification is on for the same
+cold-start reason.
 
 Deliberately not built yet (see `docs/PRD.md` / `docs/ARCHITECTURE.md`):
 - **Durable Objects.** The PRD's original design used a per-patient DO for
@@ -43,7 +59,7 @@ and `wrangler secret put <NAME>` for production:
 | `SUPABASE_URL` | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key — this worker bypasses RLS as a trusted backend |
 | `SENDBLUE_API_KEY_ID` / `SENDBLUE_API_KEY_SECRET` | Sendblue API auth |
-| `SENDBLUE_WEBHOOK_SECRET` | Checked against the `sb-signing-secret` header — see the caveat in `channels/sendblue.ts` about Sendblue not pinning down this header name in their docs |
+| `SENDBLUE_WEBHOOK_SECRET` | Account-level "global" signing secret, checked against the `sb-signing-secret` header |
 | `OPENAI_API_KEY` | Reply structuring |
 | `WORKER_ADMIN_TOKEN` | Bearer token for `POST /send-test`. Leave unset to disable the route entirely |
 

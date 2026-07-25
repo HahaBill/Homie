@@ -1,52 +1,33 @@
+import { Agent, run, setDefaultModelProvider, setTracingDisabled } from "@openai/agents-core";
+import { OpenAIProvider, setDefaultOpenAIKey } from "@openai/agents-openai";
+import { z } from "zod";
 import type { Env } from "./env";
 import type { ParsedReply } from "./types";
 
-async function structured<T>(env: Env, systemPrompt: string, userPayload: unknown, schemaName: string, schema: object): Promise<T> {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: env.OPENAI_MODEL,
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: JSON.stringify(userPayload, null, 2) },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: schemaName, strict: true, schema },
-      },
-    }),
-  });
+// Imported from @openai/agents-core + @openai/agents-openai directly instead
+// of the @openai/agents facade: the facade's entrypoint statically does
+// `export * as realtime from '@openai/agents-realtime'`, and with no
+// sideEffects markers anywhere in the packages esbuild can't tree-shake any
+// of it — the realtime/voice stack would ride along in the bundle unused.
+// The two setup lines below mirror exactly what the facade's own entrypoint
+// runs at import time (minus its tracing exporter, which we disable anyway).
+setDefaultModelProvider(new OpenAIProvider({ cacheResponsesWebSocketModels: false }));
 
-  if (!response.ok) {
-    throw new Error(`OpenAI ${response.status}: ${await response.text()}`);
-  }
+// Workers can't reliably flush the SDK's background trace-export loop before
+// the request ends (see the SDK's Cloudflare Workers troubleshooting notes) —
+// disable tracing rather than ship traces that may silently never make it out.
+setTracingDisabled(true);
 
-  const data = (await response.json()) as any;
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI returned no structured content");
-  return JSON.parse(content) as T;
-}
+const ParsedReplySchema = z.object({
+  pain_level: z.number().int().min(1).max(5).nullable(),
+  areas: z.array(z.string()),
+  meds_taken: z.boolean().nullable(),
+  confidence: z.number().min(0).max(1),
+  note: z.string(),
+  reply_text: z.string(),
+});
 
-const PARSE_REPLY_SCHEMA = {
-  type: "object",
-  properties: {
-    pain_level: { type: ["integer", "null"], minimum: 1, maximum: 5 },
-    areas: { type: "array", items: { type: "string" } },
-    meds_taken: { type: ["boolean", "null"] },
-    confidence: { type: "number", minimum: 0, maximum: 1 },
-    note: { type: "string" },
-    reply_text: { type: "string" },
-  },
-  required: ["pain_level", "areas", "meds_taken", "confidence", "note", "reply_text"],
-  additionalProperties: false,
-};
-
-const SYSTEM_PROMPT = `You are Homie, texting a person who has lupus or rheumatoid arthritis, right after they
+const INSTRUCTIONS = `You are Homie, texting a person who has lupus or rheumatoid arthritis, right after they
 replied to a check-in. Homie notices. It never advises.
 
 Convert their free-text reply into structured data:
@@ -69,6 +50,26 @@ Then write reply_text — the next thing Homie says back. Rules, no exceptions:
   hard-coded rule handles that before you ever see the message. Do not attempt to triage
   urgency yourself.`;
 
+// One Agent per isolate — instructions and schema are static, and the model
+// name is the same on every request of a deployment, so there's no reason to
+// re-derive the JSON schema from zod per message.
+let cachedAgent: Agent<unknown, typeof ParsedReplySchema> | null = null;
+let cachedModel: string | null = null;
+
+function agentFor(env: Env): Agent<unknown, typeof ParsedReplySchema> {
+  if (!cachedAgent || cachedModel !== env.OPENAI_MODEL) {
+    cachedAgent = new Agent({
+      name: "Homie reply parser",
+      instructions: INSTRUCTIONS,
+      model: env.OPENAI_MODEL,
+      modelSettings: { temperature: 0.2 },
+      outputType: ParsedReplySchema,
+    });
+    cachedModel = env.OPENAI_MODEL;
+  }
+  return cachedAgent;
+}
+
 /**
  * The one OpenAI call behind an inbound Sendblue reply: structures it into an
  * observation (see docs/PRD.md §5, §8) and drafts the short reply Homie sends
@@ -77,11 +78,14 @@ Then write reply_text — the next thing Homie says back. Rules, no exceptions:
  * the single reply it's parsing.
  */
 export async function parseAndComposeReply(env: Env, replyText: string): Promise<ParsedReply> {
-  return structured<ParsedReply>(
-    env,
-    SYSTEM_PROMPT,
-    { patient_message: replyText },
-    "parsed_reply",
-    PARSE_REPLY_SCHEMA
-  );
+  // Workers have no persistent process.env, so the SDK's lazy key lookup
+  // never sees a Worker secret — set it from the per-request binding every
+  // call (a module-global assignment, effectively free).
+  setDefaultOpenAIKey(env.OPENAI_API_KEY);
+
+  const result = await run(agentFor(env), replyText);
+  if (!result.finalOutput) {
+    throw new Error("Homie reply parser produced no output");
+  }
+  return result.finalOutput;
 }
