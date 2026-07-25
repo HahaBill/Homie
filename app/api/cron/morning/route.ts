@@ -35,6 +35,13 @@ type UserRow = {
   timezone: string;
 };
 
+/** Her most recent answered check-in, as read back to her next morning. */
+type LastReply = {
+  repliedAt: string;
+  painLevel: number | null;
+  areas: string[] | null;
+};
+
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || !secretsMatch(req.headers.get("authorization"), `Bearer ${secret}`)) {
@@ -75,6 +82,38 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // What she said last time. PRD §5 lists this among the morning message's
+  // inputs and it is the one that makes the difference between a weather bot
+  // and something that was paying attention. Looked back four days so a
+  // quiet couple of days does not silently drop the thread; older than that
+  // and referring to it reads as surveillance rather than memory.
+  const lastByUser = new Map<string, LastReply>();
+  {
+    const since = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recent, error: recentError } = await db
+      .from("checkins")
+      .select("user_id, replied_at, observations(pain_level, areas)")
+      .not("replied_at", "is", null)
+      .gte("replied_at", since)
+      .order("replied_at", { ascending: false });
+    if (recentError) {
+      console.error(`recent replies fetch: ${recentError.message}`);
+    } else {
+      for (const row of recent ?? []) {
+        // Ordered newest first, so the first row per user is her last reply.
+        if (lastByUser.has(row.user_id)) continue;
+        const obs = Array.isArray(row.observations)
+          ? row.observations[0]
+          : (row.observations as { pain_level: number | null; areas: string[] | null } | null);
+        lastByUser.set(row.user_id, {
+          repliedAt: row.replied_at as string,
+          painLevel: obs?.pain_level ?? null,
+          areas: obs?.areas ?? null,
+        });
+      }
+    }
+  }
+
   const results: Array<Record<string, unknown>> = [];
   for (const user of (users ?? []) as UserRow[]) {
     // One user's failure is never allowed to cost everyone else their morning
@@ -87,7 +126,12 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const text = composeMorning(user, snapshot, medByUser.get(user.id));
+      const text = composeMorning(
+        user,
+        snapshot,
+        medByUser.get(user.id),
+        lastByUser.get(user.id),
+      );
 
       if (dryRun) {
         results.push({ user: user.id, dry_run: true, preview: text });
@@ -173,20 +217,35 @@ function composeMorning(
   user: UserRow,
   w: PressureSnapshot | null,
   med?: { name: string; schedule: string | null },
+  last?: LastReply,
 ): string {
   const lines: string[] = [];
   lines.push(user.name ? `morning, ${user.name.toLowerCase()}.` : "morning.");
 
+  // Her own last words come before the weather: the message should open on
+  // her, not on a barometer. This is the §14 baseline rule in practice —
+  // she is compared to her own recent days and to nobody else's.
+  const recalled = recallLine(last);
+
   // What the weather is doing, read against the pattern Homie has seen.
+  let pressureLine: string | null = null;
   if (w && w.pressureDelta24h <= -5) {
-    lines.push(
-      "pressure's dropping hard today — the same shape as mornings that have been rough on your hands before.",
-    );
+    pressureLine =
+      "pressure's dropping hard today — the same shape as mornings that have been rough on your hands before.";
   } else if (w && w.pressureDelta24h >= 5) {
-    lines.push("pressure's climbing back up today.");
+    pressureLine = "pressure's climbing back up today.";
   } else if (w) {
-    lines.push("pressure's steady today.");
+    pressureLine = "pressure's steady today.";
   }
+
+  // Both of these are Homie noticing out loud, so on a day that also carries
+  // a sun or heat line they share one paragraph rather than spending two.
+  // §14 asks for short, and five blocks stops being a text and starts being
+  // a bulletin — but neither line is worth dropping to get there: the recall
+  // is what makes this personal, and the UV line matters specifically to
+  // lupus. Merging keeps both inside the limit.
+  const noticed = [recalled, pressureLine].filter(Boolean) as string[];
+  if (noticed.length) lines.push(noticed.join(" "));
 
   // Sun and heat, when today actually calls for it.
   const precautions: string[] = [];
@@ -217,6 +276,49 @@ function composeMorning(
   }
 
   return lines.join("\n\n");
+}
+
+/**
+ * Reads her last reply back to her, in her own terms.
+ *
+ * The constraints are §14's, and they are narrow on purpose. Never a score —
+ * "yesterday was a 4" is exactly the health-app tone the PRD holds up as the
+ * thing not to be, even though the number is sitting right there in the
+ * observation. Never a prediction about today, and never advice. It notices
+ * out loud, then leaves her alone: the message still ends on a question she
+ * can ignore.
+ *
+ * Returns null rather than filling the space when there is nothing to say —
+ * silence is a valid message (§14).
+ */
+function recallLine(last?: LastReply): string | null {
+  if (!last) return null;
+
+  const hoursAgo = (Date.now() - new Date(last.repliedAt).getTime()) / 3_600_000;
+  if (!Number.isFinite(hoursAgo) || hoursAgo < 0) return null;
+  // "yesterday" has to be true. Past a day and a half it becomes "the other
+  // day", and past four days the prefetch never handed us the row at all.
+  const when = hoursAgo <= 36 ? "yesterday" : "the other day";
+
+  // At most two areas: three or more stops sounding like a person talking.
+  const areas = last.areas?.filter(Boolean).slice(0, 2) ?? [];
+  const where =
+    areas.length === 2 ? `${areas[0]} and ${areas[1]}` : areas.length === 1 ? areas[0] : null;
+
+  if (last.painLevel != null && last.painLevel >= 4) {
+    return where
+      ? `${when} the ${where} were having a rough time of it.`
+      : `${when} sounded like a rough one.`;
+  }
+  if (last.painLevel != null && last.painLevel <= 2) {
+    return where
+      ? `${when} sounded easier, the ${where} aside.`
+      : `${when} sounded like an easier one.`;
+  }
+  // Pain came back ambiguous — the parser stored that honestly, so the
+  // briefing does too, mentioning only where it was without grading it.
+  if (where) return `${when} it was the ${where}.`;
+  return null;
 }
 
 function withinWakingHours(timezone: string): boolean {
