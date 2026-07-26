@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, audit } from "@/lib/server/supabase";
 import { getPatientForSession } from "@/lib/server/patient";
-import {
-  CODE_TTL_SECONDS,
-  generateCode,
-  hashCode,
-  normalizePhone,
-  verificationMessage,
-} from "@/lib/server/phone";
+import { normalizePhone } from "@/lib/server/phone";
 
 /**
- * Step one of claiming a phone number: text a code to it.
+ * Save the phone number Homie should use for texts, calls and record joins.
  *
- * Sent through the worker's Sendblue adapter rather than a second SMS
- * provider, so the code arrives in the same thread Homie already talks in —
- * which is itself part of the proof, and means no new credential.
+ * This intentionally does not send a verification code. The onboarding path
+ * collects explicit consent and persists the number so the user's Vapi calls,
+ * Sendblue messages and web record have the same join key.
  */
 
 export const runtime = "nodejs";
@@ -47,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin();
 
-  const { data: existingProfile, error: profileError } = await db
+  const { data: existingUser, error: profileError } = await db
     .from("users")
     .select("phone, onboarding_profile")
     .eq("id", lookup.patient.id)
@@ -56,15 +50,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: profileError.message }, { status: 500, headers: NO_STORE });
   }
   const profile =
-    typeof existingProfile?.onboarding_profile === "object" &&
-    existingProfile.onboarding_profile !== null &&
-    !Array.isArray(existingProfile.onboarding_profile)
-      ? existingProfile.onboarding_profile
+    typeof existingUser?.onboarding_profile === "object" &&
+    existingUser.onboarding_profile !== null &&
+    !Array.isArray(existingUser.onboarding_profile)
+      ? existingUser.onboarding_profile
       : {};
   const profilePatch: Record<string, unknown> = {
     onboarding_profile: { ...profile, call_phone: phone },
   };
-  if (!existingProfile?.phone) {
+  let savedPhoneColumn = existingUser?.phone === phone;
+  if (!existingUser?.phone || existingUser.phone === phone) {
     const { data: phoneOwner, error: phoneOwnerError } = await db
       .from("users")
       .select("id")
@@ -75,6 +70,7 @@ export async function POST(req: NextRequest) {
     }
     if (!phoneOwner || phoneOwner.id === lookup.patient.id) {
       profilePatch.phone = phone;
+      savedPhoneColumn = true;
     }
   }
   const { error: profileUpdateError } = await db
@@ -85,70 +81,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: profileUpdateError.message }, { status: 500, headers: NO_STORE });
   }
 
-  // Already ours and already verified — nothing to do, and saying so beats
-  // sending a code for a number the account plainly holds.
-  if (lookup.patient.phone === phone) {
-    return NextResponse.json({ status: "already_linked" }, { headers: NO_STORE });
-  }
-
-  const code = generateCode();
-  const { error: upsertError } = await db.from("phone_verifications").upsert(
-    {
-      user_id: lookup.patient.id,
-      phone,
-      code_hash: hashCode(code, phone),
-      attempts: 0,
-      expires_at: new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500, headers: NO_STORE });
-  }
-
-  const workerUrl = process.env.WORKER_URL;
-  const workerToken = process.env.WORKER_ADMIN_TOKEN;
-  if (!workerUrl || !workerToken) {
-    return NextResponse.json(
-      { error: "texting is not configured" },
-      { status: 501, headers: NO_STORE },
-    );
-  }
-
-  const res = await fetch(`${workerUrl.replace(/\/$/, "")}/send-test`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${workerToken}`,
-    },
-    body: JSON.stringify({ to: phone, text: verificationMessage(code) }),
-    signal: AbortSignal.timeout(20_000),
-  }).catch(() => null);
-
-  if (!res || !res.ok) {
-    const detail = res
-      ? ((await res.json().catch(() => ({}))) as { error?: string }).error
-      : null;
-    const pendingSendblueVerification =
-      detail?.toLowerCase().includes("pending verification request") ?? false;
-    // Drop the challenge rather than leave one nobody can answer.
-    await db.from("phone_verifications").delete().eq("user_id", lookup.patient.id);
-    return NextResponse.json(
-      {
-        error: pendingSendblueVerification
-          ? "Send “Hi Homie” to +1 872 296 4991 first, then come back and tap this again. Sendblue has this number in pending verification until you message Homie once."
-          : detail ?? "could not send the code — check the number and try again",
-      },
-      { status: pendingSendblueVerification ? 409 : 502, headers: NO_STORE },
-    );
-  }
-
-  // The number is not secret to its owner, but it does not belong in an
-  // insert-only table that outlives erasure, so only the fact is recorded.
-  await audit("phone_verification_sent", lookup.patient.id, {});
+  await db.from("phone_verifications").delete().eq("user_id", lookup.patient.id);
+  await audit("phone_saved", lookup.patient.id, { phone_column: savedPhoneColumn });
 
   return NextResponse.json(
-    { status: "sent", expires_in: CODE_TTL_SECONDS },
+    { status: "saved", phone, phone_column: savedPhoneColumn },
     { headers: NO_STORE },
   );
 }

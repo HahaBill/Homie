@@ -5,18 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * Claiming the number the thread already runs on.
+ * Saving the number the thread and calls should use.
  *
- * The texts and the Vapi calls key on users.phone; the web session signs in
- * with a Clerk email. Until the two meet, signing in shows a real but partial
- * record — on live data the call transcripts sat on rows a web session could
- * not reach. Clerk gates phone sign-in behind its paid tier, so Homie proves
- * the number over the channel it already owns: it texts a code and asks for
- * it back.
- *
- * A number typed into a box proves nothing. That matters more here than in
- * most products — an unverified claim would hand someone else's pain scores
- * and medication history to whoever typed the digits.
+ * This is intentionally a one-step onboarding save. The record page also joins
+ * by onboarding_profile.call_phone, so old text/call rows can appear even when
+ * another historical user row already owns users.phone.
  */
 export default function PhoneLink({
   currentPhone,
@@ -27,16 +20,12 @@ export default function PhoneLink({
   initialPhone?: string | null;
   onLinked?: () => void;
 }) {
-  const [stage, setStage] = useState<"idle" | "code" | "done">(
-    currentPhone ? "done" : "idle",
-  );
+  const [saved, setSaved] = useState(Boolean(currentPhone));
   const [phone, setPhone] = useState(initialPhone ?? "");
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [merged, setMerged] = useState(false);
 
-  async function send(e: React.FormEvent) {
+  async function save(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
@@ -49,39 +38,12 @@ export default function PhoneLink({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setNotice(data.error ?? "could not send the code just now.");
+        setNotice(data.error ?? "could not save that number just now.");
         return;
       }
-      if (data.status === "already_linked") {
-        setStage("done");
-        return;
-      }
-      setStage("code");
-    } catch {
-      setNotice("could not reach Homie just now — check the connection and try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/phone/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setNotice(data.error ?? "that did not work.");
-        return;
-      }
-      setMerged(Boolean(data.merged));
-      setStage("done");
+      setPhone(data.phone ?? phone);
+      setSaved(true);
+      setNotice("saved. Homie will use this for calls, texts and your record.");
       onLinked?.();
     } catch {
       setNotice("could not reach Homie just now — check the connection and try again.");
@@ -90,21 +52,30 @@ export default function PhoneLink({
     }
   }
 
-  if (stage === "done") {
+  if (saved) {
     return (
       <Card className="border-border bg-card font-sans">
         <CardHeader>
           <CardTitle className="font-display text-2xl text-foreground">
-            your number is linked
+            your number is saved
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground">
-            {merged
-              ? "your texts and calls have joined this page — it is all one record now."
-              : currentPhone
-                ? `texting ${currentPhone}.`
-                : "the thread and this page are the same conversation now."}
+            {phone ? `Homie will use ${phone} for texts, calls and your record.` : "Homie will use this for texts, calls and your record."}
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <Button
+            type="button"
+            variant="ghost"
+            className="rounded-full px-0 text-base font-bold text-primary hover:bg-transparent hover:text-primary"
+            onClick={() => {
+              setSaved(false);
+              setNotice(null);
+            }}
+          >
+            change number
+          </Button>
+        </CardContent>
       </Card>
     );
   }
@@ -113,85 +84,41 @@ export default function PhoneLink({
     <Card className="border-border bg-card font-sans">
       <CardHeader>
         <CardTitle className="font-display text-2xl text-foreground">
-          {stage === "idle" ? "your mobile number" : "check your phone"}
+          your mobile number
         </CardTitle>
         <CardDescription className="text-base leading-relaxed text-muted-foreground">
-          {stage === "idle"
-            ? "the thread runs on your phone. adding it here puts your texts, calls and this page in one place."
-            : "homie just said hi. enter the code from that text when you are ready."}
+          the thread runs on your phone. saving it here puts your texts, calls and this page in one place.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        {stage === "idle" ? (
-          <form onSubmit={send} className="flex flex-col gap-3">
-            <label className="field" htmlFor="phone">
-              <span>mobile number</span>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="07700 900123"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  window.sessionStorage.setItem("homie:onboarding-phone", e.target.value);
-                }}
-                disabled={busy}
-              />
-            </label>
-            {notice ? <p className="auth-note">{notice}</p> : null}
-            <Button
-              type="submit"
-              disabled={busy || phone.trim().length < 7}
-              className="mt-2 self-start rounded-full bg-primary px-8 py-6 text-lg font-extrabold text-primary-foreground hover:bg-destructive"
-            >
-              {busy ? "sending…" : "say hi to homie"}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={verify} className="flex flex-col gap-3">
-            <label className="field" htmlFor="phone-code">
-              <span>the code homie texted</span>
-              <input
-                id="phone-code"
-                name="phone-code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                disabled={busy}
-              />
-            </label>
-            {notice ? <p className="auth-note">{notice}</p> : null}
-            <div className="mt-2 flex flex-wrap gap-3">
-              <Button
-                type="submit"
-                disabled={busy || code.replace(/\D/g, "").length !== 6}
-                className="rounded-full bg-primary px-8 py-6 text-lg font-extrabold text-primary-foreground hover:bg-destructive"
-              >
-                {busy ? "checking…" : "link my number"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  setStage("idle");
-                  setCode("");
-                  setNotice(null);
-                }}
-                className="rounded-full px-6 py-6 text-base font-bold text-foreground"
-              >
-                use a different number
-              </Button>
-            </div>
-          </form>
-        )}
+        <form onSubmit={save} className="flex flex-col gap-3">
+          <label className="field" htmlFor="phone">
+            <span>mobile number</span>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="07700 900123"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                window.sessionStorage.setItem("homie:onboarding-phone", e.target.value);
+              }}
+              disabled={busy}
+            />
+          </label>
+          {notice ? <p className="auth-note">{notice}</p> : null}
+          <Button
+            type="submit"
+            disabled={busy || phone.trim().length < 7}
+            className="mt-2 self-start rounded-full bg-primary px-8 py-6 text-lg font-extrabold text-primary-foreground hover:bg-destructive"
+          >
+            {busy ? "saving…" : "save my number"}
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
