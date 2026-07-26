@@ -19,6 +19,7 @@ import {
   createAdHocCheckin,
   deleteUserData,
   findOrCreateUserByPhone,
+  findUserByPhone,
   getDataSummary,
   getOpenCheckin,
   getReportPayload,
@@ -26,7 +27,9 @@ import {
   insertAuditLog,
   insertObservation,
   setUserStatus,
+  upsertCall,
 } from "./supabase";
+import { secretsMatch } from "./compare";
 import { mintReportToken, verifyReportToken } from "./token";
 import { normalizePhone, type User } from "./types";
 
@@ -481,6 +484,113 @@ app.get("/r/:token", async (c) => {
     return c.html(linkProblemHtml("error"), 500, noStore);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Inbound: Vapi end-of-call report. Stores the call and its transcript, keyed
+// to a patient by the number already on their record (docs/PRD.md §6).
+// ---------------------------------------------------------------------------
+
+/** Vapi nests the useful fields; read defensively rather than trusting a shape. */
+type VapiMessage = {
+  type?: string;
+  endedReason?: string;
+  startedAt?: string;
+  endedAt?: string;
+  durationSeconds?: number;
+  cost?: number;
+  customer?: { number?: string };
+  call?: { id?: string; type?: string; status?: string; customer?: { number?: string } };
+  artifact?: { transcript?: string; recordingUrl?: string };
+  analysis?: { summary?: string };
+  [key: string]: unknown;
+};
+
+app.post("/webhooks/vapi", async (c) => {
+  if (!c.env.VAPI_WEBHOOK_SECRET) {
+    return c.json({ error: "VAPI_WEBHOOK_SECRET not configured — route disabled" }, 501);
+  }
+  // Vapi sends whatever custom header you configure; accept the two obvious
+  // spellings so the dashboard field can say either.
+  const presented = c.req.header("x-vapi-secret") ?? c.req.header("x-homie-secret");
+  if (!secretsMatch(presented, c.env.VAPI_WEBHOOK_SECRET)) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  const body = await c.req.json<{ message?: VapiMessage }>().catch(() => null);
+  const message = body?.message;
+  if (!message) return c.json({ received: true });
+
+  // Only the end-of-call report is durable. status-update, speech-update and
+  // partial transcript events all describe a call still in flight — writing
+  // them would let a partial overwrite a finished row.
+  if (message.type !== "end-of-call-report") {
+    return c.json({ received: true, ignored: message.type ?? "unknown" });
+  }
+
+  const callId = message.call?.id;
+  if (!callId) {
+    log({ event: "vapi_webhook", ignored: true, reason: "no_call_id" });
+    return c.json({ received: true });
+  }
+
+  // Acknowledge inside Vapi's timeout; persist after responding.
+  c.executionCtx.waitUntil(storeVapiCall(c.env, callId, message));
+  return c.json({ received: true });
+});
+
+async function storeVapiCall(env: Env, callId: string, message: VapiMessage): Promise<void> {
+  try {
+    const rawNumber = message.customer?.number ?? message.call?.customer?.number ?? null;
+    let phone: string | null = null;
+    if (rawNumber) {
+      try {
+        phone = normalizePhone(rawNumber);
+      } catch {
+        phone = rawNumber; // keep what we were given rather than losing it
+      }
+    }
+
+    // Look up, never create: an unknown caller is recorded as an unlinked
+    // call, because minting a users row here would fabricate a patient who
+    // never consented to being one.
+    const user = phone ? await findUserByPhone(env, phone) : null;
+
+    const transcript = message.artifact?.transcript ?? null;
+
+    await upsertCall(env, {
+      vapi_call_id: callId,
+      user_id: user?.id ?? null,
+      phone,
+      direction: message.call?.type ?? null,
+      status: message.call?.status ?? "ended",
+      ended_reason: message.endedReason ?? null,
+      started_at: message.startedAt ?? null,
+      ended_at: message.endedAt ?? null,
+      duration_seconds: typeof message.durationSeconds === "number" ? message.durationSeconds : null,
+      cost: typeof message.cost === "number" ? message.cost : null,
+      summary: message.analysis?.summary ?? null,
+      transcript,
+      recording_url: message.artifact?.recordingUrl ?? null,
+      payload: message,
+    });
+
+    // Transcript length, never the transcript: audit_log is insert-only and
+    // survives erasure, so anything written here outlives PRD §7.3's DELETE.
+    await insertAuditLog(env, user?.id ?? null, "vapi_call_stored", {
+      vapi_call_id: callId,
+      linked: Boolean(user),
+      transcript_length: transcript?.length ?? 0,
+    });
+
+    log({ event: "vapi_call_stored", call_id: callId, linked: Boolean(user) });
+  } catch (err) {
+    log({
+      event: "vapi_call_store_failed",
+      call_id: callId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Outbound smoke test — proves the Sendblue adapter works without waiting on
