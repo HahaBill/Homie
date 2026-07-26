@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   const { data: user, error } = await db
     .from("users")
-    .select("id, phone, name, call_consent_at, onboarding_profile")
+    .select("id, phone, name, call_consent_at, onboarding_profile, primary_condition, conditions, symptoms, baseline_feeling, bad_day, remember")
     .eq("id", lookup.patient.id)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE });

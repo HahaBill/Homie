@@ -7,6 +7,7 @@ import {
   getWhoopAccessToken,
   getWhoopOAuthConfig,
 } from "@/lib/server/whoop-auth";
+import { persistWhoopSleep } from "@/lib/server/whoop";
 
 /**
  * The unified record for the signed-in patient: thread messages and Vapi call
@@ -50,6 +51,9 @@ export async function GET() {
     weather?.pressureDelta24h ?? null,
     whoopAccessToken,
   );
+  await persistWhoopSleep(lookup.patient.id, records.whoopSleep).catch((error) => {
+    console.error(error instanceof Error ? error.message : "WHOOP readings upsert failed");
+  });
 
   return NextResponse.json(
     {

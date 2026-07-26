@@ -13,6 +13,7 @@ export type UserStatus = "active" | "stopped" | "deleted";
 export type User = {
   id: string;
   phone: string;
+  call_phone?: string | null;
   name: string | null;
   timezone: string;
   consent_at: string | null;
@@ -20,6 +21,12 @@ export type User = {
   baseline_hrv: number | null;
   status: UserStatus;
   created_at: string;
+  primary_condition?: string | null;
+  conditions?: string[] | null;
+  symptoms?: string[] | null;
+  baseline_feeling?: number | null;
+  bad_day?: string | null;
+  remember?: string | null;
 };
 
 export type CheckinChannel = "text" | "call";

@@ -563,7 +563,13 @@ type VapiMessage = {
   durationSeconds?: number;
   cost?: number;
   customer?: { number?: string };
-  call?: { id?: string; type?: string; status?: string; customer?: { number?: string } };
+  call?: {
+    id?: string;
+    type?: string;
+    status?: string;
+    customer?: { number?: string };
+    from?: { phoneNumber?: string };
+  };
   artifact?: { transcript?: string; recordingUrl?: string };
   analysis?: { summary?: string };
   [key: string]: unknown;

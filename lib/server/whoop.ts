@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { UnifiedRecords, WhoopSleepDay } from "./records";
+import { supabaseAdmin } from "./supabase";
 
 type WhoopSleepRecord = {
   id?: string;
@@ -143,4 +144,24 @@ export async function fetchWhoopSleep(
   return days.length > 0
     ? { sleep: summarizeWhoopSleep("live", days), status: "live" }
     : { sleep: null, status: "empty" };
+}
+
+export async function persistWhoopSleep(
+  userId: string,
+  sleep: UnifiedRecords["whoopSleep"],
+): Promise<void> {
+  if (!sleep?.days.length) return;
+  const { error } = await supabaseAdmin()
+    .from("readings")
+    .upsert(
+      sleep.days.map((day) => ({
+        user_id: userId,
+        date: day.date,
+        source: "whoop",
+        sleep_minutes: Math.round(day.totalSleepHours * 60),
+        sleep_quality: day.sleepPerformancePercentage,
+      })),
+      { onConflict: "user_id,date,source" },
+    );
+  if (error) throw new Error(`persistWhoopSleep: ${error.message}`);
 }

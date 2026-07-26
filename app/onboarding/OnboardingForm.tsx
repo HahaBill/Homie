@@ -110,6 +110,14 @@ export default function OnboardingForm({
   );
   const [heightCm, setHeightCm] = useState(profile.height_cm ? String(profile.height_cm) : "");
   const [weightKg, setWeightKg] = useState(profile.weight_kg ? String(profile.weight_kg) : "");
+  const [heightUnit, setHeightUnit] = useState<"metric" | "imperial">("metric");
+  const [weightUnit, setWeightUnit] = useState<"metric" | "imperial">("metric");
+  const initialHeightInches = profile.height_cm ? Math.round(profile.height_cm / 2.54) : 0;
+  const [heightFeet, setHeightFeet] = useState(initialHeightInches ? String(Math.floor(initialHeightInches / 12)) : "");
+  const [heightInches, setHeightInches] = useState(initialHeightInches ? String(initialHeightInches % 12) : "");
+  const [weightLb, setWeightLb] = useState(
+    profile.weight_kg ? String(Math.round(profile.weight_kg * 2.20462 * 10) / 10) : "",
+  );
   const [conditions, setConditions] = useState<string[]>(profile.conditions ?? []);
   const [otherCondition, setOtherCondition] = useState("");
   const [primaryCondition, setPrimaryCondition] = useState(profile.primary_condition ?? "");
@@ -314,36 +322,123 @@ export default function OnboardingForm({
 
           <div className="two-fields">
             <div className="field">
-              <Label className="field-label" htmlFor="ob-height">
-                Height
-              </Label>
-              <Input
-                id="ob-height"
-                className="homie-input"
-                type="number"
-                inputMode="decimal"
-                min="60"
-                max="260"
-                placeholder="cm"
-                value={heightCm}
-                onChange={(e) => setHeightCm(e.target.value)}
-                disabled={busy}
-              />
+              <div className="field-heading">
+                <Label className="field-label" htmlFor="ob-height">Height</Label>
+                <select
+                  className="unit-select"
+                  aria-label="Height units"
+                  value={heightUnit}
+                  onChange={(event) => {
+                    const unit = event.target.value as "metric" | "imperial";
+                    if (unit === "imperial" && heightCm) {
+                      const total = Math.round(Number(heightCm) / 2.54);
+                      setHeightFeet(String(Math.floor(total / 12)));
+                      setHeightInches(String(total % 12));
+                    }
+                    setHeightUnit(unit);
+                  }}
+                  disabled={busy}
+                >
+                  <option value="metric">cm</option>
+                  <option value="imperial">ft / in</option>
+                </select>
+              </div>
+              {heightUnit === "metric" ? (
+                <Input
+                  id="ob-height"
+                  className="homie-input"
+                  type="number"
+                  inputMode="decimal"
+                  min="60"
+                  max="260"
+                  placeholder="cm"
+                  value={heightCm}
+                  onChange={(e) => setHeightCm(e.target.value)}
+                  disabled={busy}
+                />
+              ) : (
+                <div className="imperial-inputs">
+                  <Input
+                    id="ob-height"
+                    className="homie-input"
+                    type="number"
+                    min="2"
+                    max="8"
+                    aria-label="Height in feet"
+                    placeholder="ft"
+                    value={heightFeet}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setHeightFeet(value);
+                      setHeightCm(
+                        value || heightInches
+                          ? String(Math.round((Number(value || 0) * 12 + Number(heightInches || 0)) * 2.54 * 10) / 10)
+                          : "",
+                      );
+                    }}
+                    disabled={busy}
+                  />
+                  <Input
+                    className="homie-input"
+                    type="number"
+                    min="0"
+                    max="11"
+                    aria-label="Additional height in inches"
+                    placeholder="in"
+                    value={heightInches}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      const inches = Math.min(11, Number(value || 0));
+                      setHeightInches(value);
+                      setHeightCm(
+                        value || heightFeet
+                          ? String(Math.round((Number(heightFeet || 0) * 12 + inches) * 2.54 * 10) / 10)
+                          : "",
+                      );
+                    }}
+                    disabled={busy}
+                  />
+                </div>
+              )}
             </div>
             <div className="field">
-              <Label className="field-label" htmlFor="ob-weight">
-                Weight
-              </Label>
+              <div className="field-heading">
+                <Label className="field-label" htmlFor="ob-weight">Weight</Label>
+                <select
+                  className="unit-select"
+                  aria-label="Weight units"
+                  value={weightUnit}
+                  onChange={(event) => {
+                    const unit = event.target.value as "metric" | "imperial";
+                    if (unit === "imperial" && weightKg) {
+                      setWeightLb(String(Math.round(Number(weightKg) * 2.20462 * 10) / 10));
+                    }
+                    setWeightUnit(unit);
+                  }}
+                  disabled={busy}
+                >
+                  <option value="metric">kg</option>
+                  <option value="imperial">lb</option>
+                </select>
+              </div>
               <Input
                 id="ob-weight"
                 className="homie-input"
                 type="number"
                 inputMode="decimal"
-                min="20"
-                max="350"
-                placeholder="kg"
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
+                min={weightUnit === "metric" ? "20" : "44"}
+                max={weightUnit === "metric" ? "350" : "772"}
+                placeholder={weightUnit === "metric" ? "kg" : "lb"}
+                value={weightUnit === "metric" ? weightKg : weightLb}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (weightUnit === "metric") {
+                    setWeightKg(value);
+                  } else {
+                    setWeightLb(value);
+                    setWeightKg(value ? String(Math.round((Number(value) / 2.20462) * 10) / 10) : "");
+                  }
+                }}
                 disabled={busy}
               />
             </div>

@@ -152,11 +152,27 @@ export async function POST(req: NextRequest) {
   }
 
   const nextProfile = cleanProfile(body.onboarding_profile);
-  patch.onboarding_profile = {
+  const mergedProfile = {
     ...profileObject(existingUser?.onboarding_profile),
     ...nextProfile,
   };
-  if (!existingUser?.phone && nextProfile.call_phone) {
+  patch.onboarding_profile = mergedProfile;
+  Object.assign(patch, {
+    call_phone: mergedProfile.call_phone ?? null,
+    date_of_birth: mergedProfile.date_of_birth ?? null,
+    gender: mergedProfile.gender ?? null,
+    height_cm: mergedProfile.height_cm ?? null,
+    weight_kg: mergedProfile.weight_kg ?? null,
+    primary_condition: mergedProfile.primary_condition ?? null,
+    conditions: mergedProfile.conditions ?? [],
+    symptoms: mergedProfile.symptoms ?? [],
+    baseline_feeling: mergedProfile.baseline_feeling ?? null,
+    bad_day: mergedProfile.bad_day ?? null,
+    remember: mergedProfile.remember ?? null,
+    care_contact: mergedProfile.care_contact ?? null,
+    country: mergedProfile.country ?? null,
+  });
+  if (nextProfile.call_phone && existingUser?.phone !== nextProfile.call_phone) {
     const { data: phoneOwner, error: phoneOwnerError } = await db
       .from("users")
       .select("id")

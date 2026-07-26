@@ -459,7 +459,12 @@ export async function finalizeCallSummary(
 /** Look up a patient by phone WITHOUT creating one. */
 export async function findUserByPhone(env: Env, phone: string): Promise<User | null> {
   const db = client(env);
-  const { data, error } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
+  const { data, error } = await db
+    .from("users")
+    .select("*")
+    .or(`phone.eq.${phone},call_phone.eq.${phone}`)
+    .limit(1)
+    .maybeSingle();
   if (error) throw new Error(`findUserByPhone: ${error.message}`);
   return (data as User | null) ?? null;
 }
@@ -478,8 +483,12 @@ export async function findUserByPhone(env: Env, phone: string): Promise<User | n
 export async function buildCallContext(env: Env, userId: string): Promise<string> {
   const db = client(env);
 
-  const [userRes, medsRes, checkinsRes] = await Promise.all([
-    db.from("users").select("name, onboarding_profile").eq("id", userId).maybeSingle(),
+  const [userRes, medsRes, checkinsRes, weatherRes, readingRes] = await Promise.all([
+    db
+      .from("users")
+      .select("name, primary_condition, conditions, symptoms, baseline_feeling, bad_day, remember, care_contact")
+      .eq("id", userId)
+      .maybeSingle(),
     db.from("medications").select("name, dose, schedule").eq("user_id", userId).limit(5),
     db
       .from("checkins")
@@ -489,21 +498,33 @@ export async function buildCallContext(env: Env, userId: string): Promise<string
       .not("reply_text", "is", null)
       .order("sent_at", { ascending: false })
       .limit(3),
+    db
+      .from("weather")
+      .select("pressure_delta_24h, temp_c")
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    db
+      .from("readings")
+      .select("sleep_minutes, sleep_quality, resting_hr")
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
-
-  const profile =
-    typeof userRes.data?.onboarding_profile === "object" && userRes.data.onboarding_profile !== null
-      ? (userRes.data.onboarding_profile as Record<string, unknown>)
-      : {};
 
   const lines: string[] = [];
 
   if (userRes.data?.name) lines.push(`Name: ${userRes.data.name}.`);
 
-  const conditions = Array.isArray(profile.conditions)
-    ? profile.conditions.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-    : [];
-  if (conditions.length) lines.push(`Conditions: ${conditions.join(", ")}.`);
+  const conditions = userRes.data?.conditions ?? [];
+  if (conditions.length) lines.push(`User-reported conditions to confirm: ${conditions.join(", ")}.`);
+  else if (userRes.data?.primary_condition) {
+    lines.push(`User-reported primary condition to confirm: ${userRes.data.primary_condition}.`);
+  }
+  const symptoms = userRes.data?.symptoms ?? [];
+  if (symptoms.length) lines.push(`User-reported symptoms to confirm: ${symptoms.join(", ")}.`);
 
   const meds = (medsRes.data ?? []) as Array<{ name: string; dose: string | null; schedule: string | null }>;
   if (meds.length) {
@@ -511,14 +532,17 @@ export async function buildCallContext(env: Env, userId: string): Promise<string
     lines.push(`Medication: ${medText}.`);
   }
 
-  if (typeof profile.baseline_feeling === "number") {
-    lines.push(`Baseline feeling reported at signup: ${profile.baseline_feeling} out of 5.`);
+  if (typeof userRes.data?.baseline_feeling === "number") {
+    lines.push(`Baseline feeling reported at signup: ${userRes.data.baseline_feeling} out of 5.`);
   }
-  if (typeof profile.remember === "string" && profile.remember.trim()) {
-    lines.push(`She asked to be remembered: ${profile.remember.trim()}.`);
+  if (userRes.data?.bad_day) {
+    lines.push(`A difficult day was described as: ${userRes.data.bad_day}.`);
   }
-  if (typeof profile.care_contact === "string" && profile.care_contact.trim()) {
-    lines.push(`Usual care contact: ${profile.care_contact.trim()}.`);
+  if (userRes.data?.remember) {
+    lines.push(`They asked Homie to remember: ${userRes.data.remember}.`);
+  }
+  if (userRes.data?.care_contact) {
+    lines.push(`Usual care contact: ${userRes.data.care_contact}.`);
   }
 
   const quotes = ((checkinsRes.data ?? []) as Array<{ reply_text: string }>)
@@ -526,5 +550,22 @@ export async function buildCallContext(env: Env, userId: string): Promise<string
     .map((c) => `"${c.reply_text}"`);
   if (quotes.length) lines.push(`Recent check-ins, in her own words: ${quotes.join("; ")}.`);
 
+  const observations = [
+    weatherRes.data?.pressure_delta_24h != null
+      ? `24-hour pressure change ${weatherRes.data.pressure_delta_24h} hPa`
+      : "",
+    weatherRes.data?.temp_c != null ? `temperature ${weatherRes.data.temp_c} C` : "",
+    readingRes.data?.sleep_minutes != null
+      ? `recent sleep ${Math.round(readingRes.data.sleep_minutes / 6) / 10} hours`
+      : "",
+    readingRes.data?.sleep_quality != null ? `sleep performance ${readingRes.data.sleep_quality}%` : "",
+    readingRes.data?.resting_hr != null ? `resting heart rate ${readingRes.data.resting_hr}` : "",
+  ].filter(Boolean);
+  if (observations.length) {
+    lines.push(`Recent observations, with no causal inference: ${observations.join("; ")}.`);
+  }
+  lines.push(
+    "Confirm user-reported details. Do not diagnose, predict symptoms, or recommend treatment or medication changes from weather or wearable data.",
+  );
   return lines.join(" ");
 }

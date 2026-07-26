@@ -1123,6 +1123,26 @@ img {
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
+.field-heading {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.unit-select {
+  border: 0;
+  background: transparent;
+  color: var(--terracotta);
+  font: 600 14px/1 var(--font-body);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.imperial-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
 .choice-grid {
   display: flex;
   flex-wrap: wrap;
