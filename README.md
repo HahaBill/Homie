@@ -5,9 +5,11 @@
 **Someone who notices — a proactive companion for living with multimorbidity that checks in first, holds one continuous thread across iMessage, voice and the web, and hands the GP one coherent picture.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-E8823F?style=for-the-badge&labelColor=2E2622&logo=nextdotjs&logoColor=E8823F)](https://nextjs.org)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-E8823F?style=for-the-badge&labelColor=2E2622&logo=vercel&logoColor=E8823F)](https://vercel.com)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-E8823F?style=for-the-badge&labelColor=2E2622&logo=cloudflare&logoColor=E8823F)](https://workers.cloudflare.com)
 [![Supabase](https://img.shields.io/badge/Data-Supabase-E8823F?style=for-the-badge&labelColor=2E2622&logo=supabase&logoColor=E8823F)](https://supabase.com)
 [![Voice](https://img.shields.io/badge/Voice-Vapi-E8823F?style=for-the-badge&labelColor=2E2622)](https://vapi.ai)
+[![ElevenLabs](https://img.shields.io/badge/STT%20%2B%20TTS-ElevenLabs-E8823F?style=for-the-badge&labelColor=2E2622)](https://elevenlabs.io)
 [![OpenAI](https://img.shields.io/badge/Reasoning-OpenAI-E8823F?style=for-the-badge&labelColor=2E2622&logo=openai&logoColor=E8823F)](https://openai.com)
 [![Hono](https://img.shields.io/badge/API-Hono-E8823F?style=for-the-badge&labelColor=2E2622)](https://hono.dev)
 
@@ -71,7 +73,7 @@ Homie on a phone — the warm cream icon in iOS **Recently Added**. Not another 
 - Reads **WHOOP sleep** and **barometric weather**, and keeps a personal baseline of what's normal *for you*.
 - Runs a **deterministic safety layer** first: red-flag language → NHS 999/111 guidance; exact `STOP` / `DELETE` / `MY DATA`.
 - Structures every reply into observations (pain, areas, meds) without guessing certainty.
-- Holds **one continuous record** — texts, web chat, and Vapi call transcripts on a single timeline.
+- Holds **one continuous record** — texts, web chat, and voice-call transcripts (Vapi + ElevenLabs) on a single timeline.
 - Hands you a **signed, printable report** with pressure and symptom lines as inline SVG — built to give a rheumatologist, not a dashboard to chase.
 - Never advises, diagnoses, or changes a dose. When something looks wrong, it says so plainly and points at a person.
 
@@ -88,7 +90,7 @@ flowchart LR
   cron -->|Sendblue| thread[iMessage thread]
   thread -->|webhook| worker[Homie Worker · Hono]
   web[Web chat · Clerk] -->|/chat| worker
-  voice[Vapi call] -->|end-of-call| worker
+  voice[Vapi · ElevenLabs voice/STT] -->|end-of-call| worker
   worker --> safety[Safety layer]
   safety -->|parse + reply| ai[OpenAI Agents]
   safety --> db[(Supabase · one patient)]
@@ -104,7 +106,7 @@ flowchart LR
 | Morning cadence | Quiet-hours cron, weather + last-reply memory, Sendblue outbound | Built |
 | Safety layer | Red-flag substring bypass, STOP / DELETE / MY DATA — before the model | Built |
 | Reply agent | OpenAI Agents SDK: structure observations + compose reply; weather tool | Built |
-| Voice | Vapi outbound intro + webhooks → `calls` as check-ins | Built |
+| Voice | Vapi outbound + webhooks; **ElevenLabs** for transcription and voice | Built |
 | Unified record | Timeline of texts + calls, WHOOP sleep, pressure context, printable report | Built |
 | Consent | Explicit text / call / transcript consents before outreach | Built |
 
@@ -214,10 +216,10 @@ docs/
 
 | Layer | Choice |
 | --- | --- |
-| Web app | Next.js 14 App Router on Vercel · Clerk · Tailwind / Homie design tokens |
+| Web app | Next.js 14 App Router on **Vercel** · Clerk · Tailwind / Homie design tokens |
 | Thread + report | Cloudflare Worker · Hono · OpenAI Agents SDK |
 | Messaging | Sendblue (iMessage / SMS) |
-| Voice | Vapi (outbound + end-of-call webhooks) |
+| Voice | **Vapi** for call orchestration (outbound, webhooks, assistant routing) · **ElevenLabs** for the transcriber (STT) and spoken voice (TTS) |
 | Data | Supabase Postgres |
 | Weather | Open-Meteo (barometric pressure) |
 | Wearable | WHOOP sleep API (live token; scopes minimised) |
