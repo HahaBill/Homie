@@ -32,26 +32,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "call consent is required before Homie can call" }, { status: 400, headers: NO_STORE });
   }
 
-  let callPhone = user.phone;
-  let unverifiedFallback = false;
-  if (!callPhone && body.phone) {
-    try {
-      callPhone = normalizePhone(body.phone);
-      unverifiedFallback = true;
-    } catch {
-      return NextResponse.json({ error: "that phone number is not valid for a call" }, { status: 400, headers: NO_STORE });
-    }
-  }
   const savedPhone =
     typeof user.onboarding_profile === "object" && user.onboarding_profile !== null
       ? (user.onboarding_profile as OnboardingProfile).call_phone
       : undefined;
-  if (!callPhone && savedPhone) {
+
+  // The onboarding number is the latest number the person explicitly chose
+  // for calls. Older rows can carry a stale users.phone value that passes our
+  // broad E.164 shape check but fails Vapi's country-aware validation. Apply
+  // formatting only at this provider boundary and fall through candidates
+  // instead of letting one stale value block the saved onboarding flow.
+  let callPhone: string | null = null;
+  let phoneSource: "onboarding_profile" | "users.phone" | "request" | null = null;
+  const candidates = [
+    { value: savedPhone, source: "onboarding_profile" as const },
+    { value: user.phone, source: "users.phone" as const },
+    { value: body.phone, source: "request" as const },
+  ];
+  for (const candidate of candidates) {
+    if (!candidate.value) continue;
     try {
-      callPhone = normalizePhone(savedPhone);
-      unverifiedFallback = true;
+      callPhone = normalizePhone(candidate.value);
+      phoneSource = candidate.source;
+      break;
     } catch {
-      /* ignore bad saved fallback */
+      /* try the next stored candidate */
     }
   }
   if (!callPhone) {
@@ -89,7 +94,7 @@ export async function POST(req: Request) {
     await audit("intro_call_failed", user.id, {
       status: res?.status ?? null,
       detail: detail.slice(0, 500),
-      unverified_fallback: unverifiedFallback,
+      phone_source: phoneSource,
     });
     return NextResponse.json(
       {
@@ -104,7 +109,7 @@ export async function POST(req: Request) {
   const call = (await res.json()) as { id?: string };
   await audit("intro_call_started", user.id, {
     vapi_call_id: call.id ?? null,
-    unverified_fallback: unverifiedFallback,
+    phone_source: phoneSource,
   });
   return NextResponse.json({ ok: true, call_id: call.id ?? null }, { headers: NO_STORE });
 }

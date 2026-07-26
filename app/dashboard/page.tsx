@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: { calling?: string };
+  searchParams?: { calling?: string; onboarding?: string; call?: string };
 }) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
@@ -31,6 +31,8 @@ export default async function DashboardPage({
   const patient = lookup.ok ? lookup.patient : null;
   const greetingName = patient?.name ? `, ${patient.name.toLowerCase()}` : "";
   const calling = searchParams?.calling === "1";
+  const onboardingSaved = searchParams?.onboarding === "saved";
+  const callFailed = searchParams?.call === "failed";
 
   return (
     <>
@@ -45,6 +47,14 @@ export default async function DashboardPage({
         {calling ? (
           <div className="call-soon" role="status">
             I&apos;m calling you in a minute.
+          </div>
+        ) : null}
+
+        {onboardingSaved ? (
+          <div className="call-soon" role="status">
+            {callFailed
+              ? "Your details are saved. The introductory call did not start."
+              : "Your details are saved."}
           </div>
         ) : null}
 

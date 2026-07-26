@@ -202,21 +202,21 @@ export default function OnboardingForm({
         return;
       }
       if (calls) {
-        const callRes = await fetch("/api/onboarding/intro-call", {
+        const callStarted = await fetch("/api/onboarding/intro-call", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ phone: typedPhone }),
-        });
-        if (!callRes.ok) {
-          const d = (await callRes.json().catch(() => ({}))) as { error?: string };
-          setNotice(
-            d.error ??
-              "Your data saved, but Homie could not start the call just now.",
-          );
-          return;
-        }
+        })
+          .then((response) => response.ok)
+          .catch(() => false);
+        window.location.assign(
+          callStarted
+            ? "/live?calling=1"
+            : "/dashboard?onboarding=saved&call=failed",
+        );
+        return;
       }
-      window.location.assign(calls ? "/live?calling=1" : "/dashboard");
+      window.location.assign("/dashboard?onboarding=saved");
     } catch {
       setNotice("That did not save. Give it a moment and try again.");
     } finally {
