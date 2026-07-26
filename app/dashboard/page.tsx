@@ -35,6 +35,7 @@ export default async function DashboardPage() {
             Homie
           </a>
           <nav className="site-nav" aria-label="Primary">
+            <a href="/profile">your record</a>
             <a href="/#app">how it works</a>
             <UserButton />
           </nav>

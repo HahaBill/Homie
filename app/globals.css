@@ -1145,3 +1145,64 @@ img {
     margin: 0 auto;
   }
 }
+
+/* --------------------------------------------------------------------------
+   The unified record — call entries sit inline in the timeline beside the
+   message bubbles, visibly a different kind of thing.
+   -------------------------------------------------------------------------- */
+.call-entry {
+  align-self: stretch;
+  background: var(--milk);
+  border: 1px solid var(--edge-2);
+  border-left: 3px solid var(--apricot);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin: 4px 0;
+}
+.call-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.call-entry-head .mono {
+  color: var(--clay);
+  font-size: 11px;
+}
+.call-entry-toggle {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--clay);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-block;
+}
+.call-entry-toggle:hover {
+  color: var(--ink);
+}
+.call-entry-summary {
+  margin-top: 10px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.call-transcript {
+  margin-top: 14px;
+  padding: 16px;
+  background: var(--oat);
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
