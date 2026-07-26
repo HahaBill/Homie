@@ -19,7 +19,9 @@ import {
   closeCheckinWithReply,
   completeWebhookEvent,
   createAdHocCheckin,
+  createCallCheckin,
   deleteUserData,
+  finalizeCallSummary,
   findOrCreateUserByPhone,
   findUserByPhone,
   getDataSummary,
@@ -29,7 +31,6 @@ import {
   insertAuditLog,
   insertObservation,
   setUserStatus,
-  updateCallSummary,
   upsertCall,
 } from "./supabase";
 import { secretsMatch } from "./compare";
@@ -661,7 +662,7 @@ async function storeVapiCall(env: Env, callId: string, message: VapiMessage): Pr
     // call (no matching phone) stays recorded but silent, same principle as
     // the "never fabricate a patient" rule just above.
     if (user && user.status === "active" && transcript) {
-      await sendCallRecap(env, user, callId, transcript);
+      await sendCallRecap(env, user, callId, transcript, message.startedAt ?? null);
     }
 
     await completeWebhookEvent(env, dedupeKey);
@@ -679,26 +680,41 @@ async function storeVapiCall(env: Env, callId: string, message: VapiMessage): Pr
  * the model entirely, exactly like the text pipeline (PRD §7.1) — a call
  * that described an emergency gets the fixed 999/111 line, never a chipper
  * "thanks for calling" written by a model that doesn't know better.
+ *
+ * Creates the checkins row here, not in storeVapiCall — only once recapText
+ * is final, so a call-channel checkin is never briefly "open" the way a
+ * text checkin is (see createCallCheckin in supabase.ts for why that gap
+ * would be a real race, not just an untidy intermediate state).
  */
-async function sendCallRecap(env: Env, user: User, callId: string, transcript: string): Promise<void> {
+async function sendCallRecap(
+  env: Env,
+  user: User,
+  callId: string,
+  transcript: string,
+  startedAt: string | null
+): Promise<void> {
   try {
     const recapText = isRedFlagInCallTranscript(transcript)
       ? RED_FLAG_RESPONSE
       : await summarizeCallForText(env, transcript);
 
-    const [sendResult, summaryResult] = await Promise.allSettled([
+    const checkin = await createCallCheckin(env, user.id, startedAt, recapText);
+
+    const [sendResult, linkResult] = await Promise.allSettled([
       sendblueAdapter.send(env, user.phone, { text: recapText }),
-      updateCallSummary(env, callId, recapText),
+      finalizeCallSummary(env, callId, recapText, checkin.id),
     ]);
     const status = sendResult.status === "fulfilled" ? sendResult.value.status : "failed";
-    if (summaryResult.status === "rejected") {
-      // The text still goes out — this only means the report page's "The
-      // calls" section stays blank for this one until it's retried by hand.
-      log({ event: "call_summary_persist_failed", call_id: callId, error: String(summaryResult.reason) });
+    if (linkResult.status === "rejected") {
+      // The text still goes out — this only means calls.checkin_id stays
+      // unset, so this call won't show a "see the whole call" transcript
+      // on the report page until it's retried by hand. The checkins row
+      // itself (with the recap as reply_text) already exists regardless.
+      log({ event: "call_summary_persist_failed", call_id: callId, error: String(linkResult.reason) });
     }
 
-    await insertAuditLog(env, user.id, "call_recap_sent", { vapi_call_id: callId, status });
-    log({ event: "call_recap_sent", call_id: callId, user_id: user.id, status });
+    await insertAuditLog(env, user.id, "call_recap_sent", { vapi_call_id: callId, checkin_id: checkin.id, status });
+    log({ event: "call_recap_sent", call_id: callId, user_id: user.id, checkin_id: checkin.id, status });
   } catch (err) {
     log({
       event: "call_recap_failed",

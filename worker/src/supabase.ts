@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Env } from "./env";
-import type { Checkin, Observation, ParsedReply, User, UserStatus } from "./types";
+import type { Checkin, CheckinChannel, Observation, ParsedReply, User, UserStatus } from "./types";
 
 let cachedClient: SupabaseClient | null = null;
 
@@ -118,13 +118,20 @@ export async function completeWebhookEvent(env: Env, dedupeKey: string): Promise
   if (error) throw new Error(`completeWebhookEvent: ${error.message}`);
 }
 
-/** Most recent checkin awaiting a reply, if any. */
+/**
+ * Most recent checkin awaiting a reply, if any. Scoped to channel='text' —
+ * belt and suspenders alongside createCallCheckin never leaving a call-row
+ * open in the first place: this is the function a text reply gets matched
+ * against, and a call's row must never be a candidate for it regardless of
+ * how it was created.
+ */
 export async function getOpenCheckin(env: Env, userId: string): Promise<Checkin | null> {
   const db = client(env);
   const { data, error } = await db
     .from("checkins")
     .select("*")
     .eq("user_id", userId)
+    .eq("channel", "text" satisfies CheckinChannel)
     .is("replied_at", null)
     .order("sent_at", { ascending: false })
     .limit(1)
@@ -154,6 +161,39 @@ export async function closeCheckinWithReply(env: Env, checkinId: string, replyTe
     .select("*")
     .single();
   return orThrow(data as Checkin | null, error, "closeCheckinWithReply");
+}
+
+/**
+ * Creates the checkins row for a call in one insert, already closed —
+ * replied_at and reply_text set to the final recap text, never left "open"
+ * the way a text checkin briefly is. An open call-checkin would be a real
+ * race: getOpenCheckin has no channel filter, so a text arriving in the
+ * gap between "call recorded" and "recap generated" could be matched
+ * against it and closed with her text reply instead of getting its own
+ * row. Only called once the recap text (red-flag response or the model's)
+ * is final — see sendCallRecap in index.ts.
+ */
+export async function createCallCheckin(
+  env: Env,
+  userId: string,
+  sentAt: string | null,
+  replyText: string
+): Promise<Checkin> {
+  const db = client(env);
+  const now = new Date().toISOString();
+  const { data, error } = await db
+    .from("checkins")
+    .insert({
+      user_id: userId,
+      channel: "call" satisfies CheckinChannel,
+      sent_at: sentAt ?? now,
+      message_text: null,
+      replied_at: now,
+      reply_text: replyText,
+    })
+    .select("*")
+    .single();
+  return orThrow(data as Checkin | null, error, "createCallCheckin");
 }
 
 export async function insertObservation(env: Env, checkinId: string, parsed: ParsedReply): Promise<Observation> {
@@ -214,19 +254,31 @@ export type ReportData = {
     meds_taken: boolean | null;
     note: string | null;
   }>;
-  /** The conversation, oldest first: Homie's morning messages and her replies. */
-  thread: Array<{ who: "homie" | "her"; text: string; at: string }>;
+  /**
+   * Every check-in, oldest first, either channel. A call's "reply" is its
+   * recap (see createCallCheckin) and its message_text is always null — the
+   * full transcript/duration live on `call`, joined in below by checkin_id,
+   * so the page can offer it as an optional detail without carrying a
+   * potentially-long transcript on every checkin row it doesn't need it on.
+   */
+  checkins: Array<{
+    channel: CheckinChannel;
+    at: string;
+    message_text: string | null;
+    reply_text: string | null;
+    call?: { duration_seconds: number | null; transcript: string | null };
+  }>;
   /** Daily barometric context, when the cron has been writing it. */
   weather: Array<{ date: string; pressure_delta_24h: number | null }>;
-  /** Vapi calls, dated by start time (falling back to when the row was written). Only ones with a recap — see report.ts. */
-  calls: Array<{ at: string; duration_seconds: number | null; summary: string | null }>;
 };
 
 /**
- * One parallel round trip for the whole page: user row, check-ins,
- * observations (dated via their check-in through an embedded join, so no
- * second dependent query), weather, and calls all fly together. Returns null
- * when the user doesn't exist; the caller decides what a non-active status means.
+ * One parallel round trip for the whole page: user row, check-ins (both
+ * channels — see docs/PRD.md via the 20260726040000 migration), observations
+ * (dated via their check-in through an embedded join, so no second dependent
+ * query), weather, and calls (joined onto their checkin by id, for the
+ * "see the whole call" detail) all fly together. Returns null when the user
+ * doesn't exist; the caller decides what a non-active status means.
  */
 export async function getReportPayload(env: Env, userId: string): Promise<ReportData | null> {
   const db = client(env);
@@ -235,7 +287,7 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
     db.from("users").select("*").eq("id", userId).maybeSingle(),
     db
       .from("checkins")
-      .select("sent_at, message_text, replied_at, reply_text")
+      .select("id, channel, sent_at, message_text, replied_at, reply_text")
       .eq("user_id", userId)
       .order("sent_at", { ascending: true })
       .limit(120),
@@ -255,9 +307,9 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
       .limit(120),
     db
       .from("calls")
-      .select("started_at, created_at, duration_seconds, summary")
+      .select("checkin_id, duration_seconds, transcript")
       .eq("user_id", userId)
-      .order("started_at", { ascending: false })
+      .not("checkin_id", "is", null)
       .limit(60),
   ]);
   if (userRes.error) throw new Error(`getReportPayload (user): ${userRes.error.message}`);
@@ -269,16 +321,29 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
   const user = userRes.data as User | null;
   if (!user) return null;
 
-  const thread: ReportData["thread"] = [];
-  for (const c of (checkinsRes.data ?? []) as Array<{
+  const callByCheckinId = new Map<string, { duration_seconds: number | null; transcript: string | null }>();
+  for (const c of (callsRes.data ?? []) as Array<{
+    checkin_id: string | null;
+    duration_seconds: number | null;
+    transcript: string | null;
+  }>) {
+    if (c.checkin_id) callByCheckinId.set(c.checkin_id, { duration_seconds: c.duration_seconds, transcript: c.transcript });
+  }
+
+  const checkins: ReportData["checkins"] = ((checkinsRes.data ?? []) as Array<{
+    id: string;
+    channel: CheckinChannel;
     sent_at: string;
     message_text: string | null;
     replied_at: string | null;
     reply_text: string | null;
-  }>) {
-    if (c.message_text) thread.push({ who: "homie", text: c.message_text, at: c.sent_at });
-    if (c.reply_text) thread.push({ who: "her", text: c.reply_text, at: c.replied_at ?? c.sent_at });
-  }
+  }>).map((c) => ({
+    channel: c.channel,
+    at: c.replied_at ?? c.sent_at,
+    message_text: c.message_text,
+    reply_text: c.reply_text,
+    call: c.channel === "call" ? callByCheckinId.get(c.id) : undefined,
+  }));
 
   type ObsRow = {
     pain_level: number | null;
@@ -303,23 +368,11 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
     })
     .sort((a, b) => (a.at < b.at ? -1 : 1));
 
-  const calls: ReportData["calls"] = ((callsRes.data ?? []) as Array<{
-    started_at: string | null;
-    created_at: string;
-    duration_seconds: number | null;
-    summary: string | null;
-  }>).map((c) => ({
-    at: c.started_at ?? c.created_at,
-    duration_seconds: c.duration_seconds,
-    summary: c.summary,
-  }));
-
   return {
     user,
     observations,
-    thread,
+    checkins,
     weather: (weatherRes.data ?? []) as ReportData["weather"],
-    calls,
   };
 }
 
@@ -385,17 +438,22 @@ export async function upsertCall(
 }
 
 /**
- * Overwrites a stored call's summary with Homie's own generated recap (see
- * ai.ts's summarizeCallForText) — replacing whatever Vapi's analysis.summary
- * held, since that field is what the report page (and nothing else) reads
- * to show the call, and it must carry the same voice/safety-reviewed text
- * that was actually sent to her, not a second, uncontrolled description of
- * the same call.
+ * Finalizes a stored call: writes Homie's own generated recap as
+ * calls.summary — replacing whatever Vapi's analysis.summary held, since
+ * that field is generated by Vapi's own model with no voice/safety review
+ * — and links it to the checkins row created for it, so the report page's
+ * unified check-in list can reach this call's full transcript/duration
+ * (see getReportPayload) without a second lookup keyed on something else.
  */
-export async function updateCallSummary(env: Env, vapiCallId: string, summary: string): Promise<void> {
+export async function finalizeCallSummary(
+  env: Env,
+  vapiCallId: string,
+  summary: string,
+  checkinId: string
+): Promise<void> {
   const db = client(env);
-  const { error } = await db.from("calls").update({ summary }).eq("vapi_call_id", vapiCallId);
-  if (error) throw new Error(`updateCallSummary: ${error.message}`);
+  const { error } = await db.from("calls").update({ summary, checkin_id: checkinId }).eq("vapi_call_id", vapiCallId);
+  if (error) throw new Error(`finalizeCallSummary: ${error.message}`);
 }
 
 /** Look up a patient by phone WITHOUT creating one. */

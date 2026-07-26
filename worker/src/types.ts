@@ -22,9 +22,12 @@ export type User = {
   created_at: string;
 };
 
+export type CheckinChannel = "text" | "call";
+
 export type Checkin = {
   id: string;
   user_id: string;
+  channel: CheckinChannel;
   sent_at: string;
   message_text: string | null;
   replied_at: string | null;

@@ -193,10 +193,14 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   const tz = safeTimezone(data.user.timezone);
   const name = data.user.name ? escapeHtml(data.user.name) : null;
 
-  const first = data.observations[0] ?? null;
+  // data.checkins, not data.observations: a checkin is channel-agnostic
+  // (text or call — see the 20260726040000 migration), so this count is
+  // the true total across both, matching what STOP/MY DATA already report
+  // via getDataSummary reading the same table.
+  const firstCheckin = data.checkins[0] ?? null;
   const introLine =
-    data.observations.length > 0 && first
-      ? `${data.observations.length} check-in${data.observations.length === 1 ? "" : "s"} since ${fmtDay(first.at, tz)}`
+    data.checkins.length > 0 && firstCheckin
+      ? `${data.checkins.length} check-in${data.checkins.length === 1 ? "" : "s"} since ${fmtDay(firstCheckin.at, tz)}`
       : "The first check-ins will appear here as they happen";
 
   // Plain observed facts only — no scores, no trends language, no advice.
@@ -238,27 +242,45 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
     )
     .join("");
 
-  const calls = data.calls
-    .filter((c) => c.summary && c.summary.trim())
-    .slice(-8)
+  // One unified, reverse-chronological log across both channels — a call is
+  // a check-in too, not a separate concept (see docs/PRD.md discussion:
+  // renaming just this section without also unifying the data underneath
+  // would have collided with the "X check-ins" count above, which already
+  // reads this same table). Text entries render inline since they're
+  // already short; call entries show the recap with a native <details>
+  // toggle for the full transcript — no client JS, still prints fine.
+  const checkinEntries = data.checkins
+    .filter((c) => c.message_text || c.reply_text)
+    .slice(-20)
     .reverse()
     .map((c) => {
-      const mins = c.duration_seconds != null ? Math.round(c.duration_seconds / 60) : null;
-      const tag = mins !== null ? `CALL &middot; ${mins} MIN${mins === 1 ? "" : "S"}` : "CALL";
-      return `<div class="quote"><span class="call-tag">${tag}</span><p>${escapeHtml(c.summary as string)}</p><span class="qdate">${fmtDay(c.at, tz)}</span></div>`;
+      if (c.channel === "call") {
+        const mins = c.call?.duration_seconds != null ? Math.round(c.call.duration_seconds / 60) : null;
+        const tag = mins !== null ? `CALL &middot; ${mins} MIN${mins === 1 ? "" : "S"}` : "CALL";
+        const transcriptDetail = c.call?.transcript
+          ? `<details class="call-transcript"><summary>See the whole call</summary><p>${escapeHtml(c.call.transcript)}</p></details>`
+          : "";
+        return (
+          `<div class="quote checkin">` +
+          `<span class="call-tag">${tag}</span>` +
+          `<p>${escapeHtml(c.reply_text ?? "")}</p>` +
+          `<span class="qdate">${fmtDay(c.at, tz)}</span>` +
+          transcriptDetail +
+          `</div>`
+        );
+      }
+      const prompt = c.message_text ? `<p class="prompt">${escapeHtml(c.message_text)}</p>` : "";
+      const reply = c.reply_text ? `<p class="reply">${escapeHtml(c.reply_text)}</p>` : "";
+      return (
+        `<div class="quote checkin">` +
+        `<span class="call-tag">TEXT</span>` +
+        prompt +
+        reply +
+        `<span class="qdate">${fmtDay(c.at, tz)}</span>` +
+        `</div>`
+      );
     })
     .join("");
-
-  let thread = "";
-  let lastDayKey = "";
-  for (const m of data.thread.slice(-30)) {
-    const dayKey = localDateKey(m.at, tz);
-    if (dayKey !== lastDayKey) {
-      thread += `<div class="day-sep">${fmtDay(m.at, tz)}</div>`;
-      lastDayKey = dayKey;
-    }
-    thread += `<div class="bubble ${m.who === "homie" ? "homie" : "her"}">${escapeHtml(m.text)}</div>`;
-  }
 
   const expires = fmtDay(new Date(expUnixSeconds * 1000).toISOString(), tz);
 
@@ -322,17 +344,18 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   .qdate { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:${T.muted2}; }
   .call-tag { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
               letter-spacing:.12em; color:${T.clay}; margin-bottom:8px; }
-  .thread { display:flex; flex-direction:column; gap:8px; }
-  .day-sep { text-align:center; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
-             letter-spacing:.12em; text-transform:uppercase; color:${T.muted2}; margin:14px 0 4px; }
-  .bubble { max-width:78%; border-radius:18px; padding:10px 15px; font-size:15px; line-height:1.45; }
-  .bubble.homie { align-self:flex-start; background:${T.peach}; }
-  .bubble.her { align-self:flex-end; background:${T.clay}; color:${T.cream}; }
+  .checkin .prompt { color:${T.muted}; font-size:15px; line-height:1.5; margin:0 0 8px; }
+  .checkin .reply { font-size:17px; line-height:1.55; margin:0; }
+  details.call-transcript { margin-top:14px; }
+  details.call-transcript summary { cursor:pointer; font-family:'JetBrains Mono',ui-monospace,monospace;
+                                     font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+                                     color:${T.clayDeep}; }
+  details.call-transcript p { margin-top:10px; font-size:14px; line-height:1.6; color:${T.muted};
+                               white-space:pre-wrap; }
   footer { margin-top:56px; border-top:1px solid ${T.beige}; padding-top:20px;
            font-size:13px; line-height:1.7; color:${T.muted2}; }
   @media print {
     body { background:#fff; }
-    .bubble.her { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     footer { page-break-inside:avoid; }
   }
 </style>
@@ -353,8 +376,7 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   ${sec("The tablets", meds)}
   ${sec("Where it shows up", chips ? `<div class="chips">${chips}</div>` : "")}
   ${sec("In your own words", quotes)}
-  ${sec("The calls", calls)}
-  ${sec("The conversation", thread ? `<div class="card thread">${thread}</div>` : "")}
+  ${sec("The check-ins", checkinEntries)}
 
   <footer>
     This link expires ${expires} and this page is only for whoever it was sent to.
