@@ -1298,3 +1298,143 @@ img {
 .flare-low { border-left-color: var(--moss, #6fa07a); }
 .flare-low .flare-percent { color: var(--moss, #6fa07a); }
 .flare-low .flare-fill { background: var(--moss, #6fa07a); }
+
+/* --------------------------------------------------------------------------
+   Today's conditions — three data-driven dials. Each tile is a button; the
+   reading behind the picture opens underneath.
+   -------------------------------------------------------------------------- */
+.wx-panel {
+  background: var(--milk);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card);
+  padding: 26px 24px;
+}
+.wx-panel-title {
+  color: var(--clay);
+  font-size: 11px;
+  display: block;
+  margin-bottom: 18px;
+}
+.wx-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.wx-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px 12px;
+  min-height: 52px;
+  background: var(--oat);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.wx-tile:hover {
+  background: var(--peach);
+  transform: translateY(-2px);
+}
+.wx-tile.is-open {
+  background: var(--peach);
+  border-color: var(--apricot);
+}
+.wx-icon {
+  width: 100%;
+  max-width: 84px;
+  height: auto;
+  display: block;
+}
+.wx-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.wx-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--label);
+}
+.wx-caption {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--faint);
+}
+.wx-detail,
+.wx-hint {
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.wx-detail {
+  color: var(--ink-soft);
+  padding: 14px 16px;
+  background: var(--oat);
+  border-radius: 14px;
+}
+.wx-hint {
+  color: var(--label);
+  text-align: center;
+}
+.wx-recs {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--edge);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wx-rec {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.wx-rec svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--clay);
+}
+.wx-spin {
+  animation: wx-rotate 42s linear infinite;
+}
+@keyframes wx-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Flare gauge — arc reads faster than a bar and gives the figure a home. */
+.flare-arc {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  display: block;
+  margin: 4px auto 10px;
+}
+.flare-arc-num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 34px;
+}
+.flare-arc-pct {
+  font-size: 18px;
+}
+.flare-arc-band {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  fill: var(--label);
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .wx-tiles { grid-template-columns: 1fr; }
+  .wx-icon { max-width: 64px; }
+}

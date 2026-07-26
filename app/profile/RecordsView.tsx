@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import WeatherPanel, { FlareArc } from "./WeatherPanel";
 
 /**
  * The unified record, live.
@@ -204,13 +205,7 @@ export default function RecordsView() {
         {flare ? (
           <div className={`flare-card flare-${flare.band}`}>
             <span className="mono">FLARE LIKELIHOOD TODAY</span>
-            <div className="flare-figure">
-              <span className="flare-percent">{flare.percent}%</span>
-              <span className="flare-band">{flare.band}</span>
-            </div>
-            <div className="flare-bar" aria-hidden>
-              <div className="flare-fill" style={{ width: `${flare.percent}%` }} />
-            </div>
+            <FlareArc percent={flare.percent} band={flare.band} />
             <p className="flare-basis">{flare.basis}</p>
             <p className="flare-foot">
               {flare.usedDefault
@@ -220,45 +215,7 @@ export default function RecordsView() {
           </div>
         ) : null}
 
-        <div className="side-card">
-          <span className="mono">TODAY</span>
-          {weather ? (
-            <ul>
-              <li>
-                <strong>
-                  {Math.round(weather.pressureHpa)} hPa
-                </strong>{" "}
-                pressure, {weather.pressureDelta24h <= -3
-                  ? "falling"
-                  : weather.pressureDelta24h >= 3
-                    ? "rising"
-                    : "steady"}{" "}
-                ({weather.pressureDelta24h >= 0 ? "+" : ""}
-                {weather.pressureDelta24h} over 24h)
-              </li>
-              {weather.tempMaxC != null ? (
-                <li>
-                  Up to <strong>{Math.round(weather.tempMaxC)}°C</strong>
-                  {weather.tempMaxC >= 27 ? " — pace the day and keep water close" : ""}
-                </li>
-              ) : null}
-              {weather.uvIndexMax != null ? (
-                <li>
-                  UV peaks at <strong>{weather.uvIndexMax}</strong>
-                  {weather.uvIndexMax >= 6
-                    ? " — sleeves, a hat, or shade if you are out for long"
-                    : weather.uvIndexMax >= 3
-                      ? " — worth the sunscreen"
-                      : ""}
-                </li>
-              ) : null}
-            </ul>
-          ) : (
-            <ul>
-              <li className="dim">Weather is not available right now.</li>
-            </ul>
-          )}
-        </div>
+        <WeatherPanel weather={weather} />
 
         <div className="side-card">
           <span className="mono">WHAT HOMIE HAS NOTICED</span>

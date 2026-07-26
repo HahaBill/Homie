@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { UserButton } from "@clerk/nextjs";
+
 import RecordsView from "./RecordsView";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "Your record — Homie",
@@ -22,19 +23,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="inner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-mark" src="/homie-logo.jpg" alt="" />
-          <a href="/" className="wordmark" aria-label="Homie, home">
-            Homie
-          </a>
-          <nav className="site-nav" aria-label="Primary">
-            <a href="/dashboard">the thread</a>
-            <UserButton />
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="wrap" style={{ paddingTop: 24, paddingBottom: 88 }}>
         <RecordsView />
