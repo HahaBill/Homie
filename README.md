@@ -6,6 +6,18 @@
 
 Homie is a multimorbidity companion that works from a phone number alone. Morning texts, calls when something shifts, and a live web record. Ask in iMessage for your health report and Homie texts back a signed printable link for the clinician. Homie notices and routes. It never advises a dose or diagnoses.
 
+### Live app · Project deck
+
+| | |
+| --- | --- |
+| **Live app** | **[https://meet-homie.vercel.app](https://meet-homie.vercel.app)** |
+| **Project deck** | **[Homie Deck (standalone)](https://1f13145c-fa28-447a-a5d5-63d3b11db6a9.claudeusercontent.com/v1/design/projects/1f13145c-fa28-447a-a5d5-63d3b11db6a9/serve/Homie%20Deck%20(standalone).html?t=63ea9d7b47163ba98ca83c5c8a68c59da1f6b06075d0f101c94ba0e6e72e97a1.b58a3912-da06-4ff6-84a7-b3fa665dc4fc.6fd6779e-ea70-489e-b9b2-1d2a1b841921.1785071068.fp&direct=1)** |
+
+[![Live](https://img.shields.io/badge/Live-meet--homie.vercel.app-E8823F?style=for-the-badge&labelColor=2E2622&logo=vercel&logoColor=E8823F)](https://meet-homie.vercel.app)
+[![Deck](https://img.shields.io/badge/Deck-Homie%20slides-E8823F?style=for-the-badge&labelColor=2E2622)](https://1f13145c-fa28-447a-a5d5-63d3b11db6a9.claudeusercontent.com/v1/design/projects/1f13145c-fa28-447a-a5d5-63d3b11db6a9/serve/Homie%20Deck%20(standalone).html?t=63ea9d7b47163ba98ca83c5c8a68c59da1f6b06075d0f101c94ba0e6e72e97a1.b58a3912-da06-4ff6-84a7-b3fa665dc4fc.6fd6779e-ea70-489e-b9b2-1d2a1b841921.1785071068.fp&direct=1)
+
+Encode Hub · Consumer Health Hackathon, London
+
 [![Next.js](https://img.shields.io/badge/Next.js-14-E8823F?style=for-the-badge&labelColor=2E2622&logo=nextdotjs&logoColor=E8823F)](https://nextjs.org)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-E8823F?style=for-the-badge&labelColor=2E2622&logo=vercel&logoColor=E8823F)](https://vercel.com)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-E8823F?style=for-the-badge&labelColor=2E2622&logo=cloudflare&logoColor=E8823F)](https://workers.cloudflare.com)
@@ -14,8 +26,6 @@ Homie is a multimorbidity companion that works from a phone number alone. Mornin
 [![ElevenLabs](https://img.shields.io/badge/STT%20%2B%20TTS-ElevenLabs-E8823F?style=for-the-badge&labelColor=2E2622)](https://elevenlabs.io)
 [![OpenAI](https://img.shields.io/badge/Reasoning-OpenAI-E8823F?style=for-the-badge&labelColor=2E2622&logo=openai&logoColor=E8823F)](https://openai.com)
 [![Hono](https://img.shields.io/badge/API-Hono-E8823F?style=for-the-badge&labelColor=2E2622)](https://hono.dev)
-
-[Live app](https://meet-homie.vercel.app) · Encode Hub · Consumer Health Hackathon, London
 
 </div>
 
