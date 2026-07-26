@@ -238,6 +238,17 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
     )
     .join("");
 
+  const calls = data.calls
+    .filter((c) => c.summary && c.summary.trim())
+    .slice(-8)
+    .reverse()
+    .map((c) => {
+      const mins = c.duration_seconds != null ? Math.round(c.duration_seconds / 60) : null;
+      const tag = mins !== null ? `CALL &middot; ${mins} MIN${mins === 1 ? "" : "S"}` : "CALL";
+      return `<div class="quote"><span class="call-tag">${tag}</span><p>${escapeHtml(c.summary as string)}</p><span class="qdate">${fmtDay(c.at, tz)}</span></div>`;
+    })
+    .join("");
+
   let thread = "";
   let lastDayKey = "";
   for (const m of data.thread.slice(-30)) {
@@ -309,6 +320,8 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
            padding:20px 24px; margin-bottom:12px; }
   .quote p { margin:0; font-size:17px; line-height:1.55; }
   .qdate { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:${T.muted2}; }
+  .call-tag { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
+              letter-spacing:.12em; color:${T.clay}; margin-bottom:8px; }
   .thread { display:flex; flex-direction:column; gap:8px; }
   .day-sep { text-align:center; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
              letter-spacing:.12em; text-transform:uppercase; color:${T.muted2}; margin:14px 0 4px; }
@@ -340,6 +353,7 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   ${sec("The tablets", meds)}
   ${sec("Where it shows up", chips ? `<div class="chips">${chips}</div>` : "")}
   ${sec("In your own words", quotes)}
+  ${sec("The calls", calls)}
   ${sec("The conversation", thread ? `<div class="card thread">${thread}</div>` : "")}
 
   <footer>

@@ -218,18 +218,20 @@ export type ReportData = {
   thread: Array<{ who: "homie" | "her"; text: string; at: string }>;
   /** Daily barometric context, when the cron has been writing it. */
   weather: Array<{ date: string; pressure_delta_24h: number | null }>;
+  /** Vapi calls, dated by start time (falling back to when the row was written). Only ones with a recap — see report.ts. */
+  calls: Array<{ at: string; duration_seconds: number | null; summary: string | null }>;
 };
 
 /**
  * One parallel round trip for the whole page: user row, check-ins,
  * observations (dated via their check-in through an embedded join, so no
- * second dependent query), and weather all fly together. Returns null when
- * the user doesn't exist; the caller decides what a non-active status means.
+ * second dependent query), weather, and calls all fly together. Returns null
+ * when the user doesn't exist; the caller decides what a non-active status means.
  */
 export async function getReportPayload(env: Env, userId: string): Promise<ReportData | null> {
   const db = client(env);
 
-  const [userRes, checkinsRes, obsRes, weatherRes] = await Promise.all([
+  const [userRes, checkinsRes, obsRes, weatherRes, callsRes] = await Promise.all([
     db.from("users").select("*").eq("id", userId).maybeSingle(),
     db
       .from("checkins")
@@ -251,11 +253,18 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
       .eq("user_id", userId)
       .order("date", { ascending: true })
       .limit(120),
+    db
+      .from("calls")
+      .select("started_at, created_at, duration_seconds, summary")
+      .eq("user_id", userId)
+      .order("started_at", { ascending: false })
+      .limit(60),
   ]);
   if (userRes.error) throw new Error(`getReportPayload (user): ${userRes.error.message}`);
   if (checkinsRes.error) throw new Error(`getReportPayload (checkins): ${checkinsRes.error.message}`);
   if (obsRes.error) throw new Error(`getReportPayload (observations): ${obsRes.error.message}`);
   if (weatherRes.error) throw new Error(`getReportPayload (weather): ${weatherRes.error.message}`);
+  if (callsRes.error) throw new Error(`getReportPayload (calls): ${callsRes.error.message}`);
 
   const user = userRes.data as User | null;
   if (!user) return null;
@@ -294,11 +303,23 @@ export async function getReportPayload(env: Env, userId: string): Promise<Report
     })
     .sort((a, b) => (a.at < b.at ? -1 : 1));
 
+  const calls: ReportData["calls"] = ((callsRes.data ?? []) as Array<{
+    started_at: string | null;
+    created_at: string;
+    duration_seconds: number | null;
+    summary: string | null;
+  }>).map((c) => ({
+    at: c.started_at ?? c.created_at,
+    duration_seconds: c.duration_seconds,
+    summary: c.summary,
+  }));
+
   return {
     user,
     observations,
     thread,
     weather: (weatherRes.data ?? []) as ReportData["weather"],
+    calls,
   };
 }
 
@@ -361,6 +382,20 @@ export async function upsertCall(
   const db = client(env);
   const { error } = await db.from("calls").upsert(row, { onConflict: "vapi_call_id" });
   if (error) throw new Error(`upsertCall: ${error.message}`);
+}
+
+/**
+ * Overwrites a stored call's summary with Homie's own generated recap (see
+ * ai.ts's summarizeCallForText) — replacing whatever Vapi's analysis.summary
+ * held, since that field is what the report page (and nothing else) reads
+ * to show the call, and it must carry the same voice/safety-reviewed text
+ * that was actually sent to her, not a second, uncontrolled description of
+ * the same call.
+ */
+export async function updateCallSummary(env: Env, vapiCallId: string, summary: string): Promise<void> {
+  const db = client(env);
+  const { error } = await db.from("calls").update({ summary }).eq("vapi_call_id", vapiCallId);
+  if (error) throw new Error(`updateCallSummary: ${error.message}`);
 }
 
 /** Look up a patient by phone WITHOUT creating one. */

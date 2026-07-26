@@ -1,11 +1,12 @@
 import { Hono } from "hono";
-import { parseAndComposeReply } from "./ai";
+import { parseAndComposeReply, summarizeCallForText } from "./ai";
 import { sendblueAdapter, verifySendblueSignature, type SendblueInboundPayload } from "./channels/sendblue";
 import type { Env } from "./env";
 import {
   classifyCommand,
   DELETE_RESPONSE,
   isRedFlag,
+  isRedFlagInCallTranscript,
   myDataResponseText,
   RED_FLAG_RESPONSE,
   STOP_RESPONSE,
@@ -28,6 +29,7 @@ import {
   insertAuditLog,
   insertObservation,
   setUserStatus,
+  updateCallSummary,
   upsertCall,
 } from "./supabase";
 import { secretsMatch } from "./compare";
@@ -583,6 +585,17 @@ app.post("/webhooks/vapi", async (c) => {
 });
 
 async function storeVapiCall(env: Env, callId: string, message: VapiMessage): Promise<void> {
+  // Vapi retries webhook deliveries the same as Sendblue does — and unlike
+  // the earlier version of this handler, a duplicate now has a visible
+  // consequence: it would text the patient a second recap of the same call.
+  // Same claim/complete lease as the Sendblue path (webhook_events); left as
+  // "processing" on failure below so a genuine retry can still take it over.
+  const dedupeKey = `vapi:${callId}`;
+  if (!(await claimWebhookEvent(env, dedupeKey))) {
+    log({ event: "webhook_duplicate", provider: "vapi", dedupe_key: dedupeKey });
+    return;
+  }
+
   try {
     const rawNumber = message.customer?.number ?? message.call?.customer?.number ?? null;
     let phone: string | null = null;
@@ -627,10 +640,54 @@ async function storeVapiCall(env: Env, callId: string, message: VapiMessage): Pr
     });
 
     log({ event: "vapi_call_stored", call_id: callId, linked: Boolean(user) });
+
+    // A recap only goes out when we know who to send it to — an unlinked
+    // call (no matching phone) stays recorded but silent, same principle as
+    // the "never fabricate a patient" rule just above.
+    if (user && user.status === "active" && transcript) {
+      await sendCallRecap(env, user, callId, transcript);
+    }
+
+    await completeWebhookEvent(env, dedupeKey);
   } catch (err) {
     log({
       event: "vapi_call_store_failed",
       call_id: callId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Texts a recap of the call that just ended. Red-flag runs first and skips
+ * the model entirely, exactly like the text pipeline (PRD §7.1) — a call
+ * that described an emergency gets the fixed 999/111 line, never a chipper
+ * "thanks for calling" written by a model that doesn't know better.
+ */
+async function sendCallRecap(env: Env, user: User, callId: string, transcript: string): Promise<void> {
+  try {
+    const recapText = isRedFlagInCallTranscript(transcript)
+      ? RED_FLAG_RESPONSE
+      : await summarizeCallForText(env, transcript);
+
+    const [sendResult, summaryResult] = await Promise.allSettled([
+      sendblueAdapter.send(env, user.phone, { text: recapText }),
+      updateCallSummary(env, callId, recapText),
+    ]);
+    const status = sendResult.status === "fulfilled" ? sendResult.value.status : "failed";
+    if (summaryResult.status === "rejected") {
+      // The text still goes out — this only means the report page's "The
+      // calls" section stays blank for this one until it's retried by hand.
+      log({ event: "call_summary_persist_failed", call_id: callId, error: String(summaryResult.reason) });
+    }
+
+    await insertAuditLog(env, user.id, "call_recap_sent", { vapi_call_id: callId, status });
+    log({ event: "call_recap_sent", call_id: callId, user_id: user.id, status });
+  } catch (err) {
+    log({
+      event: "call_recap_failed",
+      call_id: callId,
+      user_id: user.id,
       error: err instanceof Error ? err.message : String(err),
     });
   }
