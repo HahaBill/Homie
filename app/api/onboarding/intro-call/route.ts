@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { audit, supabaseAdmin } from "@/lib/server/supabase";
 import { getPatientForSession } from "@/lib/server/patient";
 import { normalizePhone } from "@/lib/server/phone";
+import { buildVapiPatientContext } from "@/lib/server/vapi-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "vapi outbound calling is not configured" }, { status: 501, headers: NO_STORE });
   }
 
+  // Best-effort: a context-building failure must not block the call itself.
+  // The assistant's system prompt has a {{patient_context}} placeholder
+  // that reads naturally as empty, so an empty string here just means the
+  // call starts the way it always did before this existed.
+  const patientContext = await buildVapiPatientContext(user.id).catch(() => "");
+
   const res = await fetch("https://api.vapi.ai/call", {
     method: "POST",
     headers: {
@@ -84,6 +91,7 @@ export async function POST(req: Request) {
         name: user.name ?? undefined,
       },
       name: "Homie introductory call",
+      ...(patientContext ? { assistantOverrides: { variableValues: { patient_context: patientContext } } } : {}),
     }),
   }).catch(() => null);
 
@@ -110,6 +118,7 @@ export async function POST(req: Request) {
   await audit("intro_call_started", user.id, {
     vapi_call_id: call.id ?? null,
     phone_source: phoneSource,
+    context_included: Boolean(patientContext),
   });
   return NextResponse.json({ ok: true, call_id: call.id ?? null }, { headers: NO_STORE });
 }

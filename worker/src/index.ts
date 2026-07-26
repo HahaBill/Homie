@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { parseAndComposeReply, summarizeCallForText } from "./ai";
 import { sendblueAdapter, verifySendblueSignature, type SendblueInboundPayload } from "./channels/sendblue";
 import type { Env } from "./env";
@@ -15,6 +15,7 @@ import {
 import { linkProblemHtml, reportHtml } from "./report";
 import { buildDailySummary } from "./summary";
 import {
+  buildCallContext,
   claimWebhookEvent,
   closeCheckinWithReply,
   completeWebhookEvent,
@@ -688,6 +689,59 @@ app.post("/sync-vapi-calls", async (c) => {
   return c.json({ ok: true, matched, stored });
 });
 
+/**
+ * Vapi asks this before the call connects and waits on the answer, so a
+ * caller-lookup failure of any kind must still resolve to a normal call —
+ * degrading to "no context" is correct here, refusing to answer is not.
+ * Responds with the existing assistant + assistantOverrides rather than a
+ * full inline assistant definition: the live system prompt is
+ * safety-reviewed (docs/PRD.md §7/§14), and re-specifying it here would be
+ * a second copy to keep in sync and a second place it could drift from
+ * what's actually live.
+ */
+async function handleAssistantRequest(
+  c: Context<{ Bindings: Env }>,
+  message: VapiMessage
+): Promise<Response> {
+  const assistantId = c.env.VAPI_ASSISTANT_ID;
+  if (!assistantId) {
+    log({ event: "assistant_request_unconfigured" });
+    return c.json({ error: "VAPI_ASSISTANT_ID not configured" }, 501);
+  }
+
+  const rawNumber = message.customer?.number ?? message.call?.customer?.number ?? null;
+  let patientContext = "";
+  let userId: string | null = null;
+  try {
+    if (rawNumber) {
+      const user = await findUserByPhone(c.env, normalizePhone(rawNumber));
+      if (user && user.status === "active") {
+        userId = user.id;
+        patientContext = await buildCallContext(c.env, user.id);
+      }
+    }
+  } catch (err) {
+    // Never block the call on a context-lookup failure — an unrecognised or
+    // malformed number just means it rings without personalization.
+    log({ event: "assistant_request_context_failed", error: err instanceof Error ? err.message : String(err) });
+  }
+
+  log({ event: "assistant_request", linked: Boolean(userId), context_included: Boolean(patientContext) });
+
+  // assistantId and assistantOverrides are top-level siblings on
+  // ServerMessageResponseAssistantRequest, NOT nested under an "assistant"
+  // key — confirmed against Vapi's actual OpenAPI schema (api.vapi.ai/api-json)
+  // rather than assumed. "assistant" is a separate, alternative field only
+  // for a full inline CreateAssistantDTO (the transient-assistant case),
+  // which this deliberately doesn't use — see the comment above this function.
+  return c.json({
+    assistantId,
+    ...(patientContext
+      ? { assistantOverrides: { variableValues: { patient_context: patientContext } } }
+      : {}),
+  });
+}
+
 app.post("/webhooks/vapi", async (c) => {
   if (!c.env.VAPI_WEBHOOK_SECRET) {
     return c.json({ error: "VAPI_WEBHOOK_SECRET not configured — route disabled" }, 501);
@@ -702,6 +756,15 @@ app.post("/webhooks/vapi", async (c) => {
   const body = await c.req.json<{ message?: VapiMessage }>().catch(() => null);
   const message = body?.message;
   if (!message) return c.json({ received: true });
+
+  // Fires while the call is still ringing, waiting synchronously on this
+  // response to know which assistant to use — the one message type here
+  // that must not go through waitUntil. Only reachable once the phone
+  // number itself has no static assistantId (see docs/PRD.md discussion on
+  // why that's a separate, deliberate switch from this handler existing).
+  if (message.type === "assistant-request") {
+    return handleAssistantRequest(c, message);
+  }
 
   // Only the end-of-call report is durable. status-update, speech-update and
   // partial transcript events all describe a call still in flight — writing

@@ -463,3 +463,68 @@ export async function findUserByPhone(env: Env, phone: string): Promise<User | n
   if (error) throw new Error(`findUserByPhone: ${error.message}`);
   return (data as User | null) ?? null;
 }
+
+/**
+ * The inbound-call twin of lib/server/vapi-context.ts's buildVapiPatientContext
+ * — same purpose (fills {{patient_context}} in the assistant's system prompt),
+ * different runtime, so it can't share that implementation (Next's version
+ * imports "server-only" and path-aliased modules that don't resolve here).
+ * Deliberately lighter: no weather/pressure correlation, because this runs
+ * inside Vapi's assistant-request response window (the call is ringing,
+ * waiting on this), not a user-initiated button press with no such budget.
+ * Same exclusion as the outbound version and for the same reason: never
+ * includes a flare-prediction score, only what already happened.
+ */
+export async function buildCallContext(env: Env, userId: string): Promise<string> {
+  const db = client(env);
+
+  const [userRes, medsRes, checkinsRes] = await Promise.all([
+    db.from("users").select("name, onboarding_profile").eq("id", userId).maybeSingle(),
+    db.from("medications").select("name, dose, schedule").eq("user_id", userId).limit(5),
+    db
+      .from("checkins")
+      .select("reply_text")
+      .eq("user_id", userId)
+      .eq("channel", "text" satisfies CheckinChannel)
+      .not("reply_text", "is", null)
+      .order("sent_at", { ascending: false })
+      .limit(3),
+  ]);
+
+  const profile =
+    typeof userRes.data?.onboarding_profile === "object" && userRes.data.onboarding_profile !== null
+      ? (userRes.data.onboarding_profile as Record<string, unknown>)
+      : {};
+
+  const lines: string[] = [];
+
+  if (userRes.data?.name) lines.push(`Name: ${userRes.data.name}.`);
+
+  const conditions = Array.isArray(profile.conditions)
+    ? profile.conditions.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+    : [];
+  if (conditions.length) lines.push(`Conditions: ${conditions.join(", ")}.`);
+
+  const meds = (medsRes.data ?? []) as Array<{ name: string; dose: string | null; schedule: string | null }>;
+  if (meds.length) {
+    const medText = meds.map((m) => [m.name, m.dose, m.schedule].filter(Boolean).join(", ")).join("; ");
+    lines.push(`Medication: ${medText}.`);
+  }
+
+  if (typeof profile.baseline_feeling === "number") {
+    lines.push(`Baseline feeling reported at signup: ${profile.baseline_feeling} out of 5.`);
+  }
+  if (typeof profile.remember === "string" && profile.remember.trim()) {
+    lines.push(`She asked to be remembered: ${profile.remember.trim()}.`);
+  }
+  if (typeof profile.care_contact === "string" && profile.care_contact.trim()) {
+    lines.push(`Usual care contact: ${profile.care_contact.trim()}.`);
+  }
+
+  const quotes = ((checkinsRes.data ?? []) as Array<{ reply_text: string }>)
+    .reverse()
+    .map((c) => `"${c.reply_text}"`);
+  if (quotes.length) lines.push(`Recent check-ins, in her own words: ${quotes.join("; ")}.`);
+
+  return lines.join(" ");
+}

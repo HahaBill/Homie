@@ -123,7 +123,7 @@ export async function getUnifiedRecords(
   const [checkins, callsByUser, callsByPhone, weather, observations, whoopSleep] = await Promise.all([
     db
       .from("checkins")
-      .select("id, sent_at, message_text, replied_at, reply_text")
+      .select("id, channel, sent_at, message_text, replied_at, reply_text")
       .in("user_id", patientIds)
       .order("sent_at", { ascending: true })
       .limit(200),
@@ -157,7 +157,15 @@ export async function getUnifiedRecords(
 
   const timeline: TimelineItem[] = [];
 
+  // A call-channel checkin's reply_text is Homie's recap (see
+  // createCallCheckin in worker/src/supabase.ts) — attributing it to "her",
+  // as every text-channel checkin correctly does, would put words in her
+  // mouth that were actually Homie's. It's also already fully represented
+  // below as its own kind:"call" entry (summary + transcript), so pushing
+  // it here a second time would duplicate the call in the timeline besides
+  // mislabeling it. Text-channel checkins are unaffected.
   for (const c of checkins.data ?? []) {
+    if (c.channel === "call") continue;
     if (c.message_text) {
       timeline.push({ kind: "message", at: c.sent_at, who: "homie", text: c.message_text });
     }

@@ -178,6 +178,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Onboarding captures exactly one medication via singular fields, so a
+  // re-submit (retry, double-click, back button) must replace it rather
+  // than add another — a blind insert here produced duplicate rows (up to
+  // 10 for one real user) across repeat submissions during testing.
+  // Clearing first makes this idempotent regardless of how many times the
+  // form fires, and correctly drops the row if the field is cleared and
+  // resubmitted empty.
+  const { error: medDeleteError } = await db.from("medications").delete().eq("user_id", lookup.patient.id);
+  if (medDeleteError) {
+    return NextResponse.json({ error: medDeleteError.message }, { status: 500, headers: NO_STORE });
+  }
+
   const medName = body.medication_name?.trim();
   if (medName) {
     const { error } = await db.from("medications").insert({
