@@ -83,8 +83,22 @@ export async function POST(req: Request) {
   }).catch(() => null);
 
   if (!res?.ok) {
-    await audit("intro_call_failed", user.id, { status: res?.status ?? null, unverified_fallback: unverifiedFallback });
-    return NextResponse.json({ error: "Homie could not start the call just now" }, { status: 502, headers: NO_STORE });
+    const detail = res
+      ? await res.text().catch(() => "")
+      : "Vapi request failed before a response was received";
+    await audit("intro_call_failed", user.id, {
+      status: res?.status ?? null,
+      detail: detail.slice(0, 500),
+      unverified_fallback: unverifiedFallback,
+    });
+    return NextResponse.json(
+      {
+        error: detail
+          ? `Homie could not start the call: ${detail.slice(0, 220)}`
+          : "Homie could not start the call just now",
+      },
+      { status: 502, headers: NO_STORE },
+    );
   }
 
   const call = (await res.json()) as { id?: string };

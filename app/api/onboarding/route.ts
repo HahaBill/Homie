@@ -83,6 +83,12 @@ function cleanProfile(profile: unknown): OnboardingProfile {
   ) as OnboardingProfile;
 }
 
+function profileObject(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 export async function POST(req: NextRequest) {
   const lookup = await getPatientForSession();
   if (!lookup.ok) {
@@ -136,7 +142,19 @@ export async function POST(req: NextRequest) {
     patch.transcript_consent_at = body.transcript_consent ? new Date().toISOString() : null;
   }
 
-  patch.onboarding_profile = cleanProfile(body.onboarding_profile);
+  const { data: existingUser, error: existingUserError } = await db
+    .from("users")
+    .select("onboarding_profile")
+    .eq("id", lookup.patient.id)
+    .maybeSingle();
+  if (existingUserError) {
+    return NextResponse.json({ error: existingUserError.message }, { status: 500, headers: NO_STORE });
+  }
+
+  patch.onboarding_profile = {
+    ...profileObject(existingUser?.onboarding_profile),
+    ...cleanProfile(body.onboarding_profile),
+  };
   patch.onboarded_at = new Date().toISOString();
 
   if (Object.keys(patch).length > 0) {
