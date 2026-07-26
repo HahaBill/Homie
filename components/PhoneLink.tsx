@@ -112,7 +112,7 @@ export default function PhoneLink({
         <CardDescription className="text-base leading-relaxed text-muted-foreground">
           {stage === "idle"
             ? "the thread runs on your phone. adding it here puts your texts, calls and this page in one place."
-            : "homie just texted you a code. no rush."}
+            : "homie just said hi. enter the code from that text when you are ready."}
         </CardDescription>
       </CardHeader>
 
@@ -129,7 +129,10 @@ export default function PhoneLink({
                 autoComplete="tel"
                 placeholder="07700 900123"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  window.sessionStorage.setItem("homie:onboarding-phone", e.target.value);
+                }}
                 disabled={busy}
               />
             </label>
@@ -139,7 +142,7 @@ export default function PhoneLink({
               disabled={busy || phone.trim().length < 7}
               className="mt-2 self-start rounded-full bg-primary px-8 py-6 text-lg font-extrabold text-primary-foreground hover:bg-destructive"
             >
-              {busy ? "sending…" : "text me a code"}
+              {busy ? "sending…" : "say hi to homie"}
             </Button>
           </form>
         ) : (

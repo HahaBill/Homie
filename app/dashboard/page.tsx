@@ -19,13 +19,18 @@ export const dynamic = "force-dynamic";
  * lands. One idea on screen: the thread. The side column carries the
  * onboarding nudge and the standing promises, nothing else.
  */
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { calling?: string };
+}) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
   const lookup = await getPatientForSession();
   const patient = lookup.ok ? lookup.patient : null;
   const greetingName = patient?.name ? `, ${patient.name.toLowerCase()}` : "";
+  const calling = searchParams?.calling === "1";
 
   return (
     <>
@@ -36,6 +41,12 @@ export default async function DashboardPage() {
           <span className="mono">YOUR THREAD</span>
           <span className="note">hey{greetingName}. say as much or as little as you like.</span>
         </div>
+
+        {calling ? (
+          <div className="call-soon" role="status">
+            I&apos;m calling you in a minute.
+          </div>
+        ) : null}
 
         <div className="thread-grid">
           <ThreadChat />

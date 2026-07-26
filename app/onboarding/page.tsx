@@ -25,7 +25,7 @@ export default async function OnboardingPage() {
     <>
       <SiteHeader />
 
-      <main className="auth-wrap" style={{ maxWidth: 620 }}>
+      <main className="auth-wrap" style={{ maxWidth: 760 }}>
         {/* First, because it is the one that changes what the rest of the app
             can show: until the number is verified the texts and calls live on
             a row this session cannot reach. */}

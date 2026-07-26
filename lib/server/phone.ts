@@ -56,5 +56,5 @@ export function codeMatches(code: string, phone: string, expected: string): bool
 
 /** In Homie's voice — this text is the product, not a system notice. */
 export function verificationMessage(code: string): string {
-  return `${code} — that's your Homie code. it expires in ten minutes.`;
+  return `Hi, this is Homie, checking in with you. Your code is ${code}. It expires in ten minutes.`;
 }

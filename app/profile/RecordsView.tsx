@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MessageCircle, PhoneCall } from "lucide-react";
 import WeatherPanel, { FlareArc } from "./WeatherPanel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 /**
  * The unified record, live.
@@ -72,8 +77,15 @@ function mmss(seconds: number | null): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function bubbleClass(who: Extract<TimelineItem, { kind: "message" }>["who"]): string {
-  return who === "homie" ? "bubble homie" : "bubble her";
+function timeLabel(at: string): string {
+  const d = new Date(at);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+function excerpt(text: string, max = 180): string {
+  const compact = text.replace(/\s+/g, " ").trim();
+  return compact.length > max ? `${compact.slice(0, max - 1)}…` : compact;
 }
 
 export default function RecordsView() {
@@ -150,7 +162,7 @@ export default function RecordsView() {
           </span>
         </div>
 
-        <div className="thread" style={{ maxHeight: "68vh", overflowY: "auto" }}>
+        <div className="record-list" style={{ maxHeight: "68vh", overflowY: "auto" }}>
           {items.length === 0 ? (
             <div className="day-stamp">NOTHING HERE YET</div>
           ) : null}
@@ -164,41 +176,82 @@ export default function RecordsView() {
               <div key={i} style={{ display: "contents" }}>
                 {stamp ? <div className="day-stamp">{stamp}</div> : null}
 
-                {item.kind === "message" ? (
-                  <div className={bubbleClass(item.who)}>{item.text}</div>
-                ) : (
-                  <div className="call-entry">
-                    <div className="call-entry-head">
-                      <span className="mono">
-                        VOICE CALL{item.durationSeconds ? ` · ${mmss(item.durationSeconds)}` : ""}
-                      </span>
-                      {item.transcript ? (
-                        <button
-                          className="call-entry-toggle"
-                          onClick={() =>
-                            setOpenCall(openCall === item.callId ? null : item.callId)
-                          }
-                        >
-                          {openCall === item.callId ? "hide transcript" : "read transcript"}
-                        </button>
-                      ) : null}
-                    </div>
-                    {item.summary ? <p className="call-entry-summary">{item.summary}</p> : null}
-                    {openCall === item.callId && item.transcript ? (
-                      <pre className="call-transcript">{item.transcript}</pre>
-                    ) : null}
-                    {item.recordingUrl ? (
-                      <a
-                        className="call-entry-toggle"
-                        href={item.recordingUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        listen to the recording
-                      </a>
-                    ) : null}
-                  </div>
-                )}
+                <Card className="record-card">
+                  <CardContent className="record-card-content">
+                    {item.kind === "message" ? (
+                      <>
+                        <div className="record-icon record-message">
+                          <MessageCircle size={18} />
+                        </div>
+                        <div className="record-body">
+                          <div className="record-head">
+                            <div>
+                              <h3>{item.who === "homie" ? "Homie message" : "Your message"}</h3>
+                              <p>{timeLabel(item.at)}</p>
+                            </div>
+                            <Badge variant="outline">Message</Badge>
+                          </div>
+                          <p className="record-copy">{excerpt(item.text)}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="record-icon record-call">
+                          <PhoneCall size={18} />
+                        </div>
+                        <div className="record-body">
+                          <div className="record-head">
+                            <div>
+                              <h3>Call with Homie</h3>
+                              <p>
+                                {timeLabel(item.at)}
+                                {item.durationSeconds ? ` · ${mmss(item.durationSeconds)}` : ""}
+                              </p>
+                            </div>
+                            <div className="record-badges">
+                              <Badge>Call</Badge>
+                              {item.summary ? <Badge variant="secondary">Summary</Badge> : null}
+                            </div>
+                          </div>
+                          {item.summary ? (
+                            <p className="record-copy">{item.summary}</p>
+                          ) : (
+                            <p className="record-copy muted">Transcript will appear after Vapi sends the end-of-call report.</p>
+                          )}
+
+                          {item.transcript || item.recordingUrl ? (
+                            <div className="record-actions">
+                              {item.transcript ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setOpenCall(openCall === item.callId ? null : item.callId)}
+                                >
+                                  {openCall === item.callId ? "Hide transcript" : "View transcript"}
+                                </Button>
+                              ) : null}
+                              {item.recordingUrl ? (
+                                <Button asChild variant="ghost" size="sm">
+                                  <a href={item.recordingUrl} target="_blank" rel="noreferrer">
+                                    Recording
+                                  </a>
+                                </Button>
+                              ) : null}
+                            </div>
+                          ) : null}
+
+                          {openCall === item.callId && item.transcript ? (
+                            <>
+                              <Separator className="record-separator" />
+                              <pre className="call-transcript">{item.transcript}</pre>
+                            </>
+                          ) : null}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             );
           })}

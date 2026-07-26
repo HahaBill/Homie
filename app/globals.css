@@ -234,6 +234,16 @@ img {
   background: var(--clay);
   color: var(--oat);
 }
+.auth-card .btn.btn-primary {
+  min-height: 58px;
+  font-family: var(--font-body);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  border-radius: var(--r-full);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent);
+}
 .btn-ghost {
   background: transparent;
   border: 1.5px solid var(--apricot);
@@ -357,6 +367,29 @@ img {
 .app-head .note {
   font-size: 17px;
   color: var(--muted);
+}
+.call-soon {
+  margin: -6px 0 24px;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--apricot) 58%, var(--edge));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--apricot) 11%, var(--milk));
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.live-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.live-section {
+  min-width: 0;
+}
+.app-head.compact {
+  margin-bottom: 14px;
 }
 
 .app-grid {
@@ -880,11 +913,13 @@ img {
   display: block;
   margin-top: 20px;
 }
-.field span {
+.field > span,
+.field-label {
   display: block;
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 8px;
+  color: var(--ink);
 }
 .field input {
   width: 100%;
@@ -896,6 +931,281 @@ img {
   background: var(--oat);
   border: 1px solid var(--edge);
   border-radius: 14px;
+}
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--oat);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+}
+.field select {
+  min-height: var(--tap);
+}
+.field textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.field .homie-input,
+.field .homie-textarea,
+.field .homie-select-trigger {
+  width: 100%;
+  min-height: var(--tap);
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--oat);
+  border-color: var(--edge);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.field .homie-textarea {
+  min-height: 112px;
+  padding: 14px 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.field .homie-select-trigger {
+  padding: 0 16px;
+}
+.field .homie-select-trigger > span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.homie-select-content {
+  background: var(--milk);
+  border-color: var(--edge);
+  color: var(--ink);
+}
+.homie-select-content [role="option"] {
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+.onboarding-section {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--edge);
+}
+.two-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.choice-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+.choice-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: auto;
+  max-width: 100%;
+  min-height: 46px;
+  height: auto;
+  padding: 9px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--milk) 86%, white);
+  color: var(--ink-soft);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--edge) 45%, transparent);
+  white-space: normal;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.choice-pill:hover,
+.choice-pill:focus-visible {
+  border-color: color-mix(in srgb, var(--ink) 30%, var(--edge));
+  background: var(--milk);
+  color: var(--ink);
+}
+.choice-pill span {
+  display: inline;
+  min-width: 0;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+}
+.auth-card .choice-pill {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.choice-radio {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--apricot);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--clay) 14%, transparent);
+}
+.choice-pill.selected .choice-radio {
+  border-color: var(--apricot);
+  border-width: 7px;
+  background: var(--milk);
+  box-shadow: 0 3px 7px color-mix(in srgb, var(--clay) 24%, transparent);
+}
+.choice-pill.selected .choice-radio::after {
+  content: none;
+}
+.choice-pill.selected {
+  border-color: color-mix(in srgb, var(--apricot) 72%, var(--edge));
+  background: color-mix(in srgb, var(--apricot) 8%, var(--milk));
+  color: var(--ink);
+}
+.homie-checkbox {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-color: color-mix(in srgb, var(--ink) 50%, transparent);
+  border-radius: 999px;
+  color: transparent;
+  background: var(--milk);
+  box-shadow: none;
+}
+.homie-checkbox[data-state="checked"] {
+  border-color: var(--apricot);
+  background: var(--apricot);
+}
+.homie-checkbox[data-state="checked"]::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--milk);
+}
+.homie-checkbox svg {
+  display: none;
+}
+.consent-checkbox {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+}
+.baseline-control {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--milk);
+}
+.baseline-control strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.baseline-control p {
+  margin: 4px 0 0;
+  color: var(--label);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.baseline-score {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--apricot) 14%, white);
+  color: var(--clay);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.homie-slider {
+  height: 28px;
+  padding: 0 2px;
+}
+.homie-slider > span[data-orientation="horizontal"]:not([role="slider"]) {
+  height: 8px;
+  background: var(--edge);
+}
+.homie-slider > span[data-orientation="horizontal"]:not([role="slider"]) > span {
+  background: var(--apricot);
+}
+.homie-slider [role="slider"] {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--milk);
+  background: var(--apricot);
+  box-shadow: 0 0 0 1px var(--apricot);
+}
+.scale-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-top: 12px;
+  padding: 0 2px;
+}
+.scale-tick {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: 0;
+  color: var(--label);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.scale-tick i {
+  width: 2px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--edge);
+}
+.scale-tick b {
+  font-weight: 700;
+}
+.scale-tick.active {
+  color: var(--clay);
+}
+.scale-tick.active i {
+  height: 14px;
+  background: var(--apricot);
+}
+.range-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: var(--label);
+  font-size: 14px;
+}
+.consent-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.45;
+  cursor: pointer;
 }
 .auth-note {
   margin-top: 20px;
@@ -1122,7 +1432,7 @@ img {
      neither can push the grid past max-width and force a horizontal scroll. */
   grid-template-columns: minmax(0, 520px) minmax(0, 420px);
   gap: 48px;
-  align-items: center;
+  align-items: start;
   justify-content: center;
 }
 .watch-tile {
@@ -1173,6 +1483,88 @@ img {
    The unified record — call entries sit inline in the timeline beside the
    message bubbles, visibly a different kind of thing.
    -------------------------------------------------------------------------- */
+.record-list {
+  background: var(--panel);
+  border-radius: var(--r-panel);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.record-card {
+  border-color: var(--edge);
+  background: color-mix(in srgb, var(--milk) 78%, white);
+  box-shadow: none;
+}
+.record-card-content {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+}
+.record-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.record-message {
+  color: var(--apricot);
+  background: color-mix(in srgb, var(--apricot) 14%, white);
+}
+.record-call {
+  color: var(--ink);
+  background: var(--oat);
+}
+.record-body {
+  min-width: 0;
+}
+.record-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.record-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.record-head p {
+  margin: 5px 0 0;
+  color: var(--label);
+  font-size: 14px;
+}
+.record-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.record-copy {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.record-copy.muted {
+  color: var(--label);
+}
+.record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.record-separator {
+  margin: 14px 0;
+  background: var(--edge);
+}
 .call-entry {
   align-self: stretch;
   background: var(--milk);
@@ -1435,6 +1827,10 @@ img {
 }
 
 @media (max-width: 520px) {
+  .two-fields { grid-template-columns: 1fr; }
+  .record-list { padding: 18px; }
+  .record-card-content { grid-template-columns: 1fr; }
+  .record-head { flex-direction: column; }
   .wx-tiles { grid-template-columns: 1fr; }
   .wx-icon { max-width: 64px; }
 }

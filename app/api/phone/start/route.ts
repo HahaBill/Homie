@@ -47,6 +47,28 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin();
 
+  const { data: existingProfile, error: profileError } = await db
+    .from("users")
+    .select("onboarding_profile")
+    .eq("id", lookup.patient.id)
+    .maybeSingle();
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500, headers: NO_STORE });
+  }
+  const profile =
+    typeof existingProfile?.onboarding_profile === "object" &&
+    existingProfile.onboarding_profile !== null &&
+    !Array.isArray(existingProfile.onboarding_profile)
+      ? existingProfile.onboarding_profile
+      : {};
+  const { error: profileUpdateError } = await db
+    .from("users")
+    .update({ onboarding_profile: { ...profile, call_phone: phone } })
+    .eq("id", lookup.patient.id);
+  if (profileUpdateError) {
+    return NextResponse.json({ error: profileUpdateError.message }, { status: 500, headers: NO_STORE });
+  }
+
   // Already ours and already verified — nothing to do, and saying so beats
   // sending a code for a number the account plainly holds.
   if (lookup.patient.phone === phone) {
@@ -88,10 +110,13 @@ export async function POST(req: NextRequest) {
   }).catch(() => null);
 
   if (!res || !res.ok) {
+    const detail = res
+      ? ((await res.json().catch(() => ({}))) as { error?: string }).error
+      : null;
     // Drop the challenge rather than leave one nobody can answer.
     await db.from("phone_verifications").delete().eq("user_id", lookup.patient.id);
     return NextResponse.json(
-      { error: "could not send the code — check the number and try again" },
+      { error: detail ?? "could not send the code — check the number and try again" },
       { status: 502, headers: NO_STORE },
     );
   }

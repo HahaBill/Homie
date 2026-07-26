@@ -3,6 +3,7 @@ import type { MessagingChannel, OutboundMessage } from "../types";
 
 export type SendResult = {
   providerMessageId?: string;
+  service?: "iMessage" | "SMS";
   status: "sent" | "failed";
   error?: string;
 };
