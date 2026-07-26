@@ -180,6 +180,48 @@ export default function RecordsView() {
   }, []);
 
   const calls = items.filter((i): i is Extract<TimelineItem, { kind: "call" }> => i.kind === "call");
+  const whoopCard = whoopSleep ? (
+    <div className="side-card whoop-card">
+      <div className="whoop-card-head">
+        <span className="mono">MOCK WHOOP · 7 DAYS</span>
+        <Badge variant="outline">Sleep</Badge>
+      </div>
+      <div className="whoop-hero">
+        <div>
+          <Moon size={22} />
+          <strong>{whoopSleep.averages.sleepPerformancePercentage}%</strong>
+          <span>sleep performance</span>
+        </div>
+        <div>
+          <Bed size={22} />
+          <strong>{whoopSleep.averages.totalSleepHours}h</strong>
+          <span>average sleep</span>
+        </div>
+      </div>
+      <div className="whoop-metrics">
+        <span>
+          <Activity size={16} />
+          {whoopSleep.averages.respiratoryRate}/min respiratory
+        </span>
+        <span>{whoopSleep.averages.sleepConsistencyPercentage}% consistency</span>
+        <span>{whoopSleep.averages.sleepEfficiencyPercentage}% efficiency</span>
+      </div>
+      <div className="whoop-days" aria-label="Mock WHOOP sleep performance over the last 7 days">
+        {whoopSleep.days.map((day) => (
+          <div key={day.date} className="whoop-day">
+            <i style={{ height: `${Math.max(22, day.sleepPerformancePercentage)}%` }} />
+            <span>{shortDay(day.date)}</span>
+            <b>{day.sleepPerformancePercentage}</b>
+          </div>
+        ))}
+      </div>
+      <p className="whoop-note">
+        Mock data shaped from WHOOP sleep fields: score state, stage
+        summary, respiratory rate, performance, consistency and
+        efficiency.
+      </p>
+    </div>
+  ) : null;
 
   let lastDay = "";
 
@@ -194,8 +236,10 @@ export default function RecordsView() {
               : state === "loading"
                 ? "opening…"
                 : "reconnecting…"}
-          </span>
+            </span>
         </div>
+
+        {whoopCard}
 
         <div className="record-list" style={{ maxHeight: "68vh", overflowY: "auto" }}>
           {items.length === 0 ? (
@@ -308,49 +352,6 @@ export default function RecordsView() {
         ) : null}
 
         <WeatherPanel weather={weather} />
-
-        {whoopSleep ? (
-          <div className="side-card whoop-card">
-            <div className="whoop-card-head">
-              <span className="mono">MOCK WHOOP · 7 DAYS</span>
-              <Badge variant="outline">Sleep</Badge>
-            </div>
-            <div className="whoop-hero">
-              <div>
-                <Moon size={22} />
-                <strong>{whoopSleep.averages.sleepPerformancePercentage}%</strong>
-                <span>sleep performance</span>
-              </div>
-              <div>
-                <Bed size={22} />
-                <strong>{whoopSleep.averages.totalSleepHours}h</strong>
-                <span>average sleep</span>
-              </div>
-            </div>
-            <div className="whoop-metrics">
-              <span>
-                <Activity size={16} />
-                {whoopSleep.averages.respiratoryRate}/min respiratory
-              </span>
-              <span>{whoopSleep.averages.sleepConsistencyPercentage}% consistency</span>
-              <span>{whoopSleep.averages.sleepEfficiencyPercentage}% efficiency</span>
-            </div>
-            <div className="whoop-days" aria-label="Mock WHOOP sleep performance over the last 7 days">
-              {whoopSleep.days.map((day) => (
-                <div key={day.date} className="whoop-day">
-                  <i style={{ height: `${Math.max(22, day.sleepPerformancePercentage)}%` }} />
-                  <span>{shortDay(day.date)}</span>
-                  <b>{day.sleepPerformancePercentage}</b>
-                </div>
-              ))}
-            </div>
-            <p className="whoop-note">
-              Mock data shaped from WHOOP sleep fields: score state, stage
-              summary, respiratory rate, performance, consistency and
-              efficiency.
-            </p>
-          </div>
-        ) : null}
 
         <div className="side-card">
           <span className="mono">WHAT HOMIE HAS NOTICED</span>

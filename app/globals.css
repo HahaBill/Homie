@@ -585,6 +585,9 @@ img {
   background: color-mix(in srgb, var(--milk) 78%, white);
   border: 1px solid var(--edge);
 }
+.app-head + .whoop-card {
+  margin-bottom: 18px;
+}
 .whoop-card-head {
   display: flex;
   align-items: center;
