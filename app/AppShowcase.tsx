@@ -200,28 +200,6 @@ export default function AppShowcase() {
 
             <div className="side-cards">
               <div className="side-card">
-                <span className="mono">HOW THE MESSAGE IS BUILT</span>
-                <ul>
-                  <li>
-                    <strong>Line one</strong> — a greeting, nothing else.
-                  </li>
-                  <li>
-                    <strong>Line two</strong> — what the watch saw, in her numbers
-                    against her own average.
-                  </li>
-                  <li>
-                    <strong>Line three</strong> — what it&apos;s seen before. This is
-                    the whole product.
-                  </li>
-                  <li>
-                    <strong>Line four</strong> — one question, ending the message.
-                  </li>
-                  <li className="dim">
-                    Blank lines between. Nothing bold, nothing numbered, no score.
-                  </li>
-                </ul>
-              </div>
-              <div className="side-card">
                 <span className="mono">WHEN HOMIE SAYS NOTHING</span>
                 <ul>
                   <li>Four of the last seven days: silence. Steady numbers are not news.</li>

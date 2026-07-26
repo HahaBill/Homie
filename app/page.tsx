@@ -22,22 +22,14 @@ export default function Home() {
               someone who <span>notices.</span>
             </h1>
             <p className="lede" style={{ color: "var(--cocoa)", fontSize: 22 }}>
-              Homie is a companion for living with lupus or rheumatoid
-              arthritis. It reads your Whoop or Apple Watch, keeps track of
-              what&apos;s normal <em>for you</em>, and gets in touch first when
-              something shifts.
-            </p>
-            <p className="sub" style={{ color: "var(--faint)", fontSize: 19 }}>
-              It notices. It doesn&apos;t advise, diagnose, or change a dose —
-              and when something looks wrong it says so plainly and points you
-              at a person.
+              Homie is a companion for living with more than one long-term
+              condition, like lupus or rheumatoid arthritis. It reads your Whoop
+              or Apple Watch, keeps track of what&apos;s normal <em>for you</em>,
+              and gets in touch first when something shifts.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href="/sign-in">
+              <a className="btn btn-primary btn-pulse" href="/sign-in">
                 start with a text
-              </a>
-              <a className="btn btn-ghost" href="#app">
-                see a week of it
               </a>
             </div>
           </div>

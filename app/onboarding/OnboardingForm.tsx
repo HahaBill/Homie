@@ -57,6 +57,30 @@ const CARE_OPTIONS = [
 
 const GENDER_OPTIONS = ["woman", "man", "non-binary", "self-describe"];
 
+const KG_PER_LB = 0.45359237;
+const LB_PER_STONE = 14;
+
+function stoneLbToKg(stone: string, lb: string): number | undefined {
+  const st = Number(stone);
+  const lbs = Number(lb);
+  const validSt = Number.isFinite(st) && st >= 0;
+  const validLb = Number.isFinite(lbs) && lbs >= 0;
+  if (!validSt && !validLb) return undefined;
+  const totalLb = (validSt ? st : 0) * LB_PER_STONE + (validLb ? lbs : 0);
+  return totalLb > 0 ? Math.round(totalLb * KG_PER_LB * 10) / 10 : undefined;
+}
+
+function kgToStoneLb(kg: number): { stone: string; lb: string } {
+  const totalLb = kg / KG_PER_LB;
+  let stone = Math.floor(totalLb / LB_PER_STONE);
+  let lb = Math.round(totalLb - stone * LB_PER_STONE);
+  if (lb >= LB_PER_STONE) {
+    lb -= LB_PER_STONE;
+    stone += 1;
+  }
+  return { stone: String(stone), lb: String(lb) };
+}
+
 const BASELINE_LABELS: Record<string, { label: string; help: string }> = {
   "1": { label: "Very well", help: "Most days feel manageable." },
   "2": {
@@ -111,13 +135,13 @@ export default function OnboardingForm({
   const [heightCm, setHeightCm] = useState(profile.height_cm ? String(profile.height_cm) : "");
   const [weightKg, setWeightKg] = useState(profile.weight_kg ? String(profile.weight_kg) : "");
   const [heightUnit, setHeightUnit] = useState<"metric" | "imperial">("metric");
-  const [weightUnit, setWeightUnit] = useState<"metric" | "imperial">("metric");
+  const [weightUnit, setWeightUnit] = useState<"kg" | "st">("kg");
   const initialHeightInches = profile.height_cm ? Math.round(profile.height_cm / 2.54) : 0;
   const [heightFeet, setHeightFeet] = useState(initialHeightInches ? String(Math.floor(initialHeightInches / 12)) : "");
   const [heightInches, setHeightInches] = useState(initialHeightInches ? String(initialHeightInches % 12) : "");
-  const [weightLb, setWeightLb] = useState(
-    profile.weight_kg ? String(Math.round(profile.weight_kg * 2.20462 * 10) / 10) : "",
-  );
+  const initialStoneLb = profile.weight_kg ? kgToStoneLb(profile.weight_kg) : { stone: "", lb: "" };
+  const [weightStone, setWeightStone] = useState(initialStoneLb.stone);
+  const [weightLb, setWeightLb] = useState(initialStoneLb.lb);
   const [conditions, setConditions] = useState<string[]>(profile.conditions ?? []);
   const [otherCondition, setOtherCondition] = useState("");
   const [primaryCondition, setPrimaryCondition] = useState(profile.primary_condition ?? "");
@@ -154,6 +178,22 @@ export default function OnboardingForm({
     return Number.isFinite(n) && n > 0 ? n : undefined;
   }
 
+  function switchWeightUnit(unit: "kg" | "st") {
+    if (unit === weightUnit) return;
+    if (unit === "st") {
+      const kg = numberOrUndefined(weightKg);
+      if (kg) {
+        const { stone, lb } = kgToStoneLb(kg);
+        setWeightStone(stone);
+        setWeightLb(lb);
+      }
+    } else {
+      const kg = stoneLbToKg(weightStone, weightLb);
+      if (kg) setWeightKg(String(kg));
+    }
+    setWeightUnit(unit);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
@@ -178,7 +218,8 @@ export default function OnboardingForm({
                 ? genderSelfDescribe.trim() || undefined
                 : gender || undefined,
             height_cm: numberOrUndefined(heightCm),
-            weight_kg: numberOrUndefined(weightKg),
+            weight_kg:
+              weightUnit === "kg" ? numberOrUndefined(weightKg) : stoneLbToKg(weightStone, weightLb),
             conditions: [
               ...conditions.filter((c) => c !== "Other"),
               ...(otherCondition.trim() ? [otherCondition.trim()] : []),
@@ -408,39 +449,53 @@ export default function OnboardingForm({
                   className="unit-select"
                   aria-label="Weight units"
                   value={weightUnit}
-                  onChange={(event) => {
-                    const unit = event.target.value as "metric" | "imperial";
-                    if (unit === "imperial" && weightKg) {
-                      setWeightLb(String(Math.round(Number(weightKg) * 2.20462 * 10) / 10));
-                    }
-                    setWeightUnit(unit);
-                  }}
+                  onChange={(event) => switchWeightUnit(event.target.value as "kg" | "st")}
                   disabled={busy}
                 >
-                  <option value="metric">kg</option>
-                  <option value="imperial">lb</option>
+                  <option value="kg">kg</option>
+                  <option value="st">st</option>
                 </select>
               </div>
-              <Input
-                id="ob-weight"
-                className="homie-input"
-                type="number"
-                inputMode="decimal"
-                min={weightUnit === "metric" ? "20" : "44"}
-                max={weightUnit === "metric" ? "350" : "772"}
-                placeholder={weightUnit === "metric" ? "kg" : "lb"}
-                value={weightUnit === "metric" ? weightKg : weightLb}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  if (weightUnit === "metric") {
-                    setWeightKg(value);
-                  } else {
-                    setWeightLb(value);
-                    setWeightKg(value ? String(Math.round((Number(value) / 2.20462) * 10) / 10) : "");
-                  }
-                }}
-                disabled={busy}
-              />
+              {weightUnit === "kg" ? (
+                <Input
+                  id="ob-weight"
+                  className="homie-input"
+                  type="number"
+                  inputMode="decimal"
+                  min="20"
+                  max="350"
+                  placeholder="kg"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(e.target.value)}
+                  disabled={busy}
+                />
+              ) : (
+                <div className="imperial-inputs">
+                  <Input
+                    id="ob-weight"
+                    className="homie-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="50"
+                    placeholder="st"
+                    value={weightStone}
+                    onChange={(e) => setWeightStone(e.target.value)}
+                    disabled={busy}
+                  />
+                  <Input
+                    className="homie-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="13"
+                    placeholder="lb"
+                    value={weightLb}
+                    onChange={(e) => setWeightLb(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

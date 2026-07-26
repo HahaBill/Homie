@@ -32,12 +32,13 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://meet-homie.vercel.app"),
   title: "Homie — checks in, so you don't have to keep track",
   description:
-    "Homie texts you every morning, notices the pattern between the weather, your sleep and how you feel, and turns ninety days of it into one page you hand your consultant.",
+    "Homie is a companion for living with more than one long-term condition. It notices what's normal for you, checks in by text or call, and turns it into one page for your clinician — without advising or diagnosing.",
   applicationName: "Homie",
   keywords: [
+    "multimorbidity",
+    "chronic illness",
     "lupus",
     "rheumatoid arthritis",
-    "chronic illness",
     "symptom tracking",
     "barometric pressure",
     "rheumatology",
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Homie — checks in, so you don't have to keep track",
     description:
-      "A text message every morning. Ninety days of it becomes one page you hand your consultant.",
+      "A companion for living with more than one long-term condition. It notices what's normal for you, checks in first, and never advises a dose.",
     siteName: "Homie",
     type: "website",
     images: [{ url: "/homie-logo.jpg", width: 448, height: 448, alt: "Homie" }],
@@ -58,7 +59,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Homie — checks in, so you don't have to keep track",
     description:
-      "A text message every morning. Ninety days of it becomes one page you hand your consultant.",
+      "A companion for living with more than one long-term condition. It notices what's normal for you, checks in first, and never advises a dose.",
     images: ["/homie-logo.jpg"],
   },
 };

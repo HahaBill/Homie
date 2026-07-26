@@ -79,6 +79,37 @@ Homie on a phone — the warm cream icon in iOS **Recently Added**. Not another 
 
 ---
 
+## Technical architecture
+
+<p align="center">
+  <img src="docs/images/architecture.png" alt="Homie technical architecture — check-in product and glasses/skin observation paths" width="920" />
+</p>
+
+The diagram shows **two products that share a name, Supabase project, and design language** — and deliberately do **not** share a code path.
+
+| Product | What it is | In this repo today |
+| --- | --- | --- |
+| **Check-in** (live) | Daily text → parsed reply → printable clinician page · web thread · Vapi calls | **`app/` + `worker/` + `supabase/`** — verified |
+| **Glasses / skin** (partly blocked) | Ray-Ban POV → iOS capture → `skin-agent` vision + guidance | **Not in this checkout** — no `skin-agent/` or `glasses/` directories on `main` |
+
+### Verified against `main` (check-in spine)
+
+| Claim in the diagram | Code reality |
+| --- | --- |
+| Next.js 14 on Vercel + Clerk | Yes — `app/`, `middleware.ts`, meet-homie.vercel.app |
+| Cron 06:30 UTC → morning Sendblue | Yes — `vercel.json` → `/api/cron/morning` |
+| Sendblue webhook → `worker/` (Hono) | Yes — `POST /webhooks/sendblue` |
+| Browser dashboard → worker `/chat` | Yes — `/api/thread` → `WORKER_URL/chat` |
+| Signed report HMAC + inline SVG | Yes — `GET /r/:token` (not `/rf/:token`) |
+| Supabase Postgres, service role | Yes — shared migrations; RLS scaffolding |
+| OpenAI on the worker | Yes — Agents SDK; model from `OPENAI_MODEL` (**`gpt-5.4-mini`** in `wrangler.jsonc`, not gpt-4o-mini) |
+| Voice on the check-in path | **Vapi** orchestrates calls + webhooks; **ElevenLabs** STT/TTS on the assistant — end-of-call → `POST /webhooks/vapi` |
+| Deployable units on `main` | **2 runtimes shipped here:** Vercel app + one Cloudflare worker (`homie-worker`). Diagram’s second worker / iOS glasses app are a separate track |
+
+Worker endpoints live today: `/health`, `/webhooks/sendblue`, `/chat`, `/r/:token`, `/summary`, `/sync-vapi-calls`, `/webhooks/vapi`, `/send-test`.
+
+---
+
 ## How it works
 
 One rule runs everything: **the model reasons, deterministic code decides.** The LLM can compose a gentle reply; it cannot override a red-flag rule or invent medical advice. iMessage, voice, and the web are only surfaces. The patient record lives once, in Supabase.
@@ -109,6 +140,7 @@ flowchart LR
 | Voice | Vapi outbound + webhooks; **ElevenLabs** for transcription and voice | Built |
 | Unified record | Timeline of texts + calls, WHOOP sleep, pressure context, printable report | Built |
 | Consent | Explicit text / call / transcript consents before outreach | Built |
+| Glasses / skin-agent | Separate product path in the architecture diagram | Not on this `main` tree |
 
 ---
 
@@ -124,7 +156,7 @@ Single-condition tools organise around one disease. In multimorbidity the danger
 | Apps that score and streak | No grades. Ignore Homie for three days — nothing breaks |
 | Advice that can conflict across conditions | Homie never advises a dose; it notices and routes |
 
-Homie's first build focuses on **lupus / rheumatoid arthritis** — pressure, sleep, pain, meds — because that is a sharp, demoable slice of the same orchestration problem the NHS named. The architecture (one patient identity, multi-channel thread, safety-first agent, clinician-facing page) is built for cross-condition care.
+The landing line: *a companion for living with more than one long-term condition, like lupus or rheumatoid arthritis.* Those conditions are the first wedge (pressure, sleep, pain, meds), not the whole product. The architecture (one patient identity, multi-channel thread, safety-first agent, clinician-facing page) is built for cross-condition care.
 
 ---
 
@@ -207,8 +239,11 @@ supabase/migrations/     Shared Postgres schema (RLS scaffolding; service-role i
 docs/
   PRD.md                 Scope, persona, safety gates, non-goals
   ARCHITECTURE.md        Runtime split, caching, link security
-  images/                Landing, record, iMessage screenshots
+  MULTIMORBIDITY.md      Evidence + pitch sources
+  images/                Screenshots + architecture.png
 ```
+
+*(Architecture diagram also references `skin-agent/` and `glasses/` — those directories are not present on this branch.)*
 
 ---
 

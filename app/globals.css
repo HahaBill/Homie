@@ -307,6 +307,28 @@ img {
   flex-wrap: wrap;
   padding-top: 6px;
 }
+.btn-pulse {
+  font-size: 21px;
+  padding: 20px 40px;
+  animation: btn-pulse-ring 2.4s ease-in-out infinite;
+}
+.btn-pulse:hover,
+.btn-pulse:focus-visible {
+  animation-play-state: paused;
+}
+@keyframes btn-pulse-ring {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--apricot) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent),
+      0 0 0 12px color-mix(in srgb, var(--apricot) 0%, transparent);
+  }
+}
 .hero-visual {
   display: grid;
   place-items: center;
@@ -1133,7 +1155,7 @@ img {
 .unit-select {
   border: 0;
   background: transparent;
-  color: var(--terracotta);
+  color: var(--apricot);
   font: 600 14px/1 var(--font-body);
   letter-spacing: 0;
   cursor: pointer;
@@ -1285,29 +1307,47 @@ img {
   letter-spacing: 0.08em;
 }
 .homie-slider {
-  height: 28px;
-  padding: 0 2px;
+  height: 32px;
+  /* Half the thumb's width, so its center can still reach both ends
+     without the thumb hanging off the edge of the visible control. */
+  padding: 0 12px;
+  cursor: pointer;
 }
 .homie-slider > span[data-orientation="horizontal"]:not([role="slider"]) {
-  height: 8px;
-  background: var(--edge);
+  height: 10px;
+  border-radius: 999px;
+  background: var(--well);
+  border: 1px solid var(--edge-2);
 }
 .homie-slider > span[data-orientation="horizontal"]:not([role="slider"]) > span {
   background: var(--apricot);
+  border-radius: 999px;
 }
 .homie-slider [role="slider"] {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border: 3px solid var(--milk);
   background: var(--apricot);
-  box-shadow: 0 0 0 1px var(--apricot);
+  box-shadow:
+    0 0 0 1.5px var(--apricot),
+    0 2px 6px color-mix(in srgb, var(--clay) 35%, transparent);
+  cursor: grab;
+}
+.homie-slider [role="slider"]:active {
+  cursor: grabbing;
+}
+.homie-slider [role="slider"]:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1.5px var(--apricot),
+    0 0 0 5px color-mix(in srgb, var(--apricot) 30%, transparent);
 }
 .scale-track {
   display: flex;
   justify-content: space-between;
   align-items: start;
   margin-top: 12px;
-  padding: 0 2px;
+  padding: 0 12px;
 }
 .scale-tick {
   display: grid;
