@@ -29,6 +29,18 @@ type WhoopSleepResponse = {
   records?: WhoopSleepRecord[];
 };
 
+export type WhoopStatus =
+  | "live"
+  | "not_connected"
+  | "unauthorized"
+  | "empty"
+  | "unavailable";
+
+export type WhoopFetchResult = {
+  sleep: UnifiedRecords["whoopSleep"];
+  status: WhoopStatus;
+};
+
 const WHOOP_SLEEP_URL = "https://api.prod.whoop.com/developer/v2/activity/sleep";
 const MS_PER_HOUR = 3_600_000;
 
@@ -82,7 +94,7 @@ function average(
 }
 
 export function summarizeWhoopSleep(
-  source: UnifiedRecords["whoopSleep"]["source"],
+  source: "live",
   days: WhoopSleepDay[],
 ): UnifiedRecords["whoopSleep"] {
   return {
@@ -99,9 +111,10 @@ export function summarizeWhoopSleep(
   };
 }
 
-export async function fetchWhoopSleep(): Promise<UnifiedRecords["whoopSleep"] | null> {
-  const token = process.env.WHOOP_ACCESS_TOKEN;
-  if (!token) return null;
+export async function fetchWhoopSleep(
+  token: string | null,
+): Promise<WhoopFetchResult> {
+  if (!token) return { sleep: null, status: "not_connected" };
 
   const end = new Date();
   const start = new Date(end.getTime() - 8 * 86_400_000);
@@ -115,7 +128,9 @@ export async function fetchWhoopSleep(): Promise<UnifiedRecords["whoopSleep"] | 
     signal: AbortSignal.timeout(8_000),
     next: { revalidate: 900 },
   }).catch(() => null);
-  if (!res?.ok) return null;
+  if (!res) return { sleep: null, status: "unavailable" };
+  if (res.status === 401) return { sleep: null, status: "unauthorized" };
+  if (!res.ok) return { sleep: null, status: "unavailable" };
 
   const payload = (await res.json().catch(() => null)) as WhoopSleepResponse | null;
   const days = (payload?.records ?? [])
@@ -125,5 +140,7 @@ export async function fetchWhoopSleep(): Promise<UnifiedRecords["whoopSleep"] | 
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
     .slice(-7);
 
-  return days.length > 0 ? summarizeWhoopSleep("live", days) : null;
+  return days.length > 0
+    ? { sleep: summarizeWhoopSleep("live", days), status: "live" }
+    : { sleep: null, status: "empty" };
 }

@@ -3,6 +3,10 @@ import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords } from "@/lib/server/records";
 import { fetchPressure, upsertPressureSnapshot } from "@/lib/server/openmeteo";
 import { syncVapiCallsForUser } from "@/lib/server/vapi-sync";
+import {
+  getWhoopAccessToken,
+  getWhoopOAuthConfig,
+} from "@/lib/server/whoop-auth";
 
 /**
  * The unified record for the signed-in patient: thread messages and Vapi call
@@ -39,10 +43,12 @@ export async function GET() {
       console.error(error instanceof Error ? error.message : "weather upsert failed");
     }
   }
+  const whoopAccessToken = await getWhoopAccessToken(lookup.patient.id);
   await syncVapiCallsForUser(lookup.patient.id);
   const records = await getUnifiedRecords(
     lookup.patient.id,
     weather?.pressureDelta24h ?? null,
+    whoopAccessToken,
   );
 
   return NextResponse.json(
@@ -56,6 +62,7 @@ export async function GET() {
       },
       weather,
       weatherStored,
+      whoopOAuthConfigured: Boolean(getWhoopOAuthConfig()),
       ...records,
     },
     { headers: NO_STORE },

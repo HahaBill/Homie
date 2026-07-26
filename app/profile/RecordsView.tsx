@@ -63,7 +63,7 @@ type Profile = {
 };
 
 type WhoopSleep = {
-  source: "live" | "sample";
+  source: "live";
   windowDays: 7;
   days: Array<{
     date: string;
@@ -86,6 +86,13 @@ type WhoopSleep = {
     totalSleepHours: number;
   };
 };
+
+type WhoopStatus =
+  | "live"
+  | "not_connected"
+  | "unauthorized"
+  | "empty"
+  | "unavailable";
 
 function dayLabel(at: string): string {
   const d = new Date(at);
@@ -126,6 +133,9 @@ export default function RecordsView() {
   const [weather, setWeather] = useState<Weather>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [whoopSleep, setWhoopSleep] = useState<WhoopSleep | null>(null);
+  const [whoopStatus, setWhoopStatus] =
+    useState<WhoopStatus>("not_connected");
+  const [whoopOAuthConfigured, setWhoopOAuthConfigured] = useState(false);
   const [state, setState] = useState<"loading" | "live" | "error">("loading");
   const [openCall, setOpenCall] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -135,11 +145,19 @@ export default function RecordsView() {
     let cancelled = false;
     fetch("/api/records")
       .then((r) => r.json())
-      .then((d: { weather?: Weather; profile?: Profile; whoopSleep?: WhoopSleep }) => {
+      .then((d: {
+        weather?: Weather;
+        profile?: Profile;
+        whoopSleep?: WhoopSleep | null;
+        whoopStatus?: WhoopStatus;
+        whoopOAuthConfigured?: boolean;
+      }) => {
         if (cancelled) return;
         setWeather(d.weather ?? null);
         setProfile(d.profile ?? null);
         setWhoopSleep(d.whoopSleep ?? null);
+        setWhoopStatus(d.whoopStatus ?? "not_connected");
+        setWhoopOAuthConfigured(Boolean(d.whoopOAuthConfigured));
       })
       .catch(() => {});
     return () => {
@@ -156,12 +174,10 @@ export default function RecordsView() {
         timeline: TimelineItem[];
         correlation: Correlation;
         flareRisk: FlareRisk | null;
-        whoopSleep?: WhoopSleep;
       };
       setItems(d.timeline);
       setCorrelation(d.correlation);
       setFlare(d.flareRisk ?? null);
-      if (d.whoopSleep) setWhoopSleep(d.whoopSleep);
       setState("live");
     });
     es.addEventListener("flare", (e) => {
@@ -180,11 +196,23 @@ export default function RecordsView() {
   }, []);
 
   const calls = items.filter((i): i is Extract<TimelineItem, { kind: "call" }> => i.kind === "call");
-  const whoopCard = whoopSleep ? (
+  const disconnectWhoop = async () => {
+    const response = await fetch("/api/whoop/disconnect", { method: "POST" });
+    if (!response.ok) return;
+    setWhoopSleep(null);
+    setWhoopStatus("not_connected");
+  };
+
+  const whoopCard = whoopSleep && whoopStatus === "live" ? (
     <div className="side-card whoop-card">
       <div className="whoop-card-head">
         <span className="mono">LATEST WHOOP · 7 DAYS</span>
-        <Badge variant="outline">Sleep</Badge>
+        <div className="whoop-card-actions">
+          <Badge variant="outline">Live sleep</Badge>
+          <Button variant="ghost" size="sm" onClick={disconnectWhoop}>
+            Disconnect
+          </Button>
+        </div>
       </div>
       <div className="whoop-hero">
         <div>
@@ -219,11 +247,49 @@ export default function RecordsView() {
         ))}
       </div>
       <p className="whoop-note">
-        Realtime data from WHOOP sleep fields: score state, stage summary,
+        Live data from WHOOP sleep fields: score state, stage summary,
         respiratory rate, performance, consistency and efficiency.
       </p>
     </div>
-  ) : null;
+  ) : (
+    <div className="side-card whoop-card">
+      <div className="whoop-card-head">
+        <span className="mono">WHOOP · SLEEP</span>
+        <Badge variant="outline">
+          {whoopStatus === "unauthorized" ? "Reconnect" : "Not connected"}
+        </Badge>
+      </div>
+      <div className="whoop-empty">
+        <Activity size={26} />
+        <h3>
+          {whoopStatus === "unauthorized"
+            ? "Your WHOOP session expired"
+            : whoopStatus === "empty"
+              ? "No scored sleep yet"
+              : "Connect your WHOOP"}
+        </h3>
+        <p>
+          {whoopStatus === "empty"
+            ? "Homie will show the latest seven scored sleeps when WHOOP has processed them."
+            : "Authorize sleep access to load your latest seven days here."}
+        </p>
+        {whoopOAuthConfigured ? (
+          <Button asChild>
+            <a href="/api/whoop/connect">
+              {whoopStatus === "unauthorized" ? "Reconnect WHOOP" : "Connect WHOOP"}
+            </a>
+          </Button>
+        ) : (
+          <Button disabled>Connect WHOOP</Button>
+        )}
+        {!whoopOAuthConfigured ? (
+          <span className="whoop-config-note">
+            WHOOP connection is unavailable right now.
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
 
   let lastDay = "";
 

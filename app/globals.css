@@ -595,6 +595,35 @@ img {
   gap: 12px;
   margin-bottom: 16px;
 }
+
+.whoop-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whoop-empty {
+  display: flex;
+  min-height: 240px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+
+.whoop-empty h3,
+.whoop-empty p {
+  margin: 0;
+}
+
+.whoop-empty p,
+.whoop-config-note {
+  color: var(--muted);
+}
+
+.whoop-config-note {
+  font-size: 0.85rem;
+}
 .whoop-card-head .mono {
   margin-bottom: 0;
 }

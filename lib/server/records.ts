@@ -2,7 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "./supabase";
 import { computeFlareRisk, type FlareRisk } from "./flare";
 import { normalizePhone } from "./phone";
-import { fetchWhoopSleep, summarizeWhoopSleep } from "./whoop";
+import { fetchWhoopSleep, type WhoopStatus } from "./whoop";
 
 /**
  * The unified record: one chronological view of everything Homie holds for a
@@ -62,7 +62,7 @@ export type UnifiedRecords = {
   /** Null when today's pressure was not supplied by the caller. */
   flareRisk: FlareRisk | null;
   whoopSleep: {
-    source: "live" | "sample";
+    source: "live";
     windowDays: 7;
     days: WhoopSleepDay[];
     averages: {
@@ -72,7 +72,8 @@ export type UnifiedRecords = {
       respiratoryRate: number;
       totalSleepHours: number;
     };
-  };
+  } | null;
+  whoopStatus: WhoopStatus;
 };
 
 /** A pressure fall this size is the one the product is built around. */
@@ -83,6 +84,7 @@ export async function getUnifiedRecords(
   patientId: string,
   /** Today's 24h barometric change, when the caller has it. */
   pressureDelta24h: number | null = null,
+  whoopAccessToken: string | null = null,
 ): Promise<UnifiedRecords> {
   const db = supabaseAdmin();
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
@@ -150,7 +152,7 @@ export async function getUnifiedRecords(
       .select("pain_level, created_at, checkin_id")
       .order("created_at", { ascending: true })
       .limit(400),
-    fetchWhoopSleep(),
+    fetchWhoopSleep(whoopAccessToken),
   ]);
 
   const timeline: TimelineItem[] = [];
@@ -210,7 +212,8 @@ export async function getUnifiedRecords(
     callCount: calls.length,
     messageCount: timeline.filter((t) => t.kind === "message").length,
     correlation,
-    whoopSleep: whoopSleep ?? sampleWhoopSleep(),
+    whoopSleep: whoopSleep.sleep,
+    whoopStatus: whoopSleep.status,
     flareRisk:
       pressureDelta24h === null && correlation.pressureDrops === 0
         ? null
@@ -221,42 +224,6 @@ export async function getUnifiedRecords(
             recentPain,
           }),
   };
-}
-
-function sampleWhoopSleep(): UnifiedRecords["whoopSleep"] {
-  const now = new Date();
-  const template = [
-    { performance: 82, consistency: 75, efficiency: 89, respiratory: 16.3, inBed: 8.1, asleep: 7.2, disturbances: 14 },
-    { performance: 76, consistency: 72, efficiency: 86, respiratory: 16.8, inBed: 7.7, asleep: 6.6, disturbances: 18 },
-    { performance: 91, consistency: 81, efficiency: 92, respiratory: 15.9, inBed: 8.4, asleep: 7.7, disturbances: 10 },
-    { performance: 68, consistency: 63, efficiency: 84, respiratory: 17.1, inBed: 7.3, asleep: 6.1, disturbances: 22 },
-    { performance: 87, consistency: 79, efficiency: 90, respiratory: 16.2, inBed: 8.0, asleep: 7.2, disturbances: 12 },
-    { performance: 73, consistency: 70, efficiency: 85, respiratory: 16.6, inBed: 7.5, asleep: 6.4, disturbances: 19 },
-    { performance: 84, consistency: 77, efficiency: 91, respiratory: 16.1, inBed: 8.2, asleep: 7.5, disturbances: 11 },
-  ];
-  const days = template.map((day, index) => {
-    const d = new Date(now);
-    d.setDate(now.getDate() - (6 - index));
-    d.setHours(0, 0, 0, 0);
-    const start = new Date(d);
-    start.setDate(d.getDate() - 1);
-    start.setHours(23, 10 + (index % 3) * 12, 0, 0);
-    const end = new Date(start.getTime() + day.inBed * 60 * 60 * 1000);
-    return {
-      date: d.toISOString().slice(0, 10),
-      start: start.toISOString(),
-      end: end.toISOString(),
-      scoreState: "SCORED" as const,
-      sleepPerformancePercentage: day.performance,
-      sleepConsistencyPercentage: day.consistency,
-      sleepEfficiencyPercentage: day.efficiency,
-      respiratoryRate: day.respiratory,
-      totalInBedHours: day.inBed,
-      totalSleepHours: day.asleep,
-      disturbanceCount: day.disturbances,
-    };
-  });
-  return summarizeWhoopSleep("sample", days);
 }
 
 /**
