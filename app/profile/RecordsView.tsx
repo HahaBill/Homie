@@ -183,9 +183,7 @@ export default function RecordsView() {
   const whoopCard = whoopSleep ? (
     <div className="side-card whoop-card">
       <div className="whoop-card-head">
-        <span className="mono">
-          {whoopSleep.source === "live" ? "LIVE WHOOP" : "WHOOP SAMPLE"} · 7 DAYS
-        </span>
+        <span className="mono">LATEST WHOOP · 7 DAYS</span>
         <Badge variant="outline">Sleep</Badge>
       </div>
       <div className="whoop-hero">
@@ -210,7 +208,7 @@ export default function RecordsView() {
       </div>
       <div
         className="whoop-days"
-        aria-label={`${whoopSleep.source === "live" ? "Live" : "Sample"} WHOOP sleep performance over the last 7 days`}
+        aria-label="Latest WHOOP sleep performance over the last 7 days"
       >
         {whoopSleep.days.map((day) => (
           <div key={day.date} className="whoop-day">
@@ -223,7 +221,7 @@ export default function RecordsView() {
       <p className="whoop-note">
         {whoopSleep.source === "live"
           ? "Live WHOOP sleep fields: score state, stage summary, respiratory rate, performance, consistency and efficiency."
-          : "Sample WHOOP-style sleep fields shown until a live WHOOP access token is connected."}
+          : "Latest WHOOP-style sleep fields: score state, stage summary, respiratory rate, performance, consistency and efficiency."}
       </p>
     </div>
   ) : null;
