@@ -55,6 +55,8 @@ export default function PhoneLink({
         return;
       }
       setStage("code");
+    } catch {
+      setNotice("could not reach Homie just now — check the connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -79,6 +81,8 @@ export default function PhoneLink({
       setMerged(Boolean(data.merged));
       setStage("done");
       onLinked?.();
+    } catch {
+      setNotice("could not reach Homie just now — check the connection and try again.");
     } finally {
       setBusy(false);
     }
