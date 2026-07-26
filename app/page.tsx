@@ -29,10 +29,15 @@ export default function Home() {
             <a className="btn btn-primary btn-sm" href="/sign-in">
               start with a text
             </a>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
           </nav>
+          {/* Outside .site-nav on purpose: the nav wraps whole items onto a
+              second row when it runs out of width, and the avatar is the one
+              thing that must not move — it anchors the header's right edge. */}
+          <SignedIn>
+            <div className="header-user">
+              <UserButton />
+            </div>
+          </SignedIn>
         </div>
       </header>
 

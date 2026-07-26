@@ -186,6 +186,29 @@ img {
   gap: 14px;
 }
 
+/**
+ * The signed-in avatar, pinned to the header's right edge.
+ *
+ * It sits outside .site-nav because that nav wraps whole items onto a second
+ * row under pressure, and an avatar that drops below the links — left
+ * aligned, half a header away from everything else — reads as broken rather
+ * than as a responsive layout. Kept in the header's own flex row it stays
+ * vertically centred against the wordmark at every width, and the nav wraps
+ * around it.
+ */
+.header-user {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-left: 16px;
+}
+/* Clerk renders its own boxes inside; keep them from stretching the row. */
+.header-user .cl-userButtonBox,
+.header-user .cl-rootBox {
+  display: flex;
+  align-items: center;
+}
+
 /* --------------------------------------------------------------------------
    Buttons
    -------------------------------------------------------------------------- */
@@ -1206,3 +1229,72 @@ img {
   max-height: 320px;
   overflow-y: auto;
 }
+
+/* Flare likelihood — the figure leads, the denominator stays attached. */
+.flare-card {
+  background: var(--milk);
+  border: 1px solid var(--edge);
+  border-left: 4px solid var(--apricot);
+  border-radius: var(--r-card);
+  padding: 28px;
+}
+.flare-card .mono {
+  color: var(--clay);
+  font-size: 11px;
+  display: block;
+  margin-bottom: 14px;
+}
+.flare-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.flare-percent {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 52px;
+  line-height: 1;
+  color: var(--apricot);
+}
+.flare-band {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--faint);
+  text-transform: lowercase;
+}
+.flare-bar {
+  margin: 16px 0 14px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--well);
+  overflow: hidden;
+}
+.flare-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--apricot);
+  transition: width 400ms ease;
+}
+.flare-basis {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.flare-foot {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+.flare-moderate .flare-percent,
+.flare-moderate .flare-fill { color: var(--apricot); background-color: var(--apricot); }
+.flare-moderate .flare-percent { background: none; }
+.flare-elevated { border-left-color: var(--clay); }
+.flare-elevated .flare-percent { color: var(--clay); }
+.flare-elevated .flare-fill { background: var(--clay); }
+.flare-high { border-left-color: var(--clay); }
+.flare-high .flare-percent { color: var(--clay); }
+.flare-high .flare-fill { background: var(--clay); }
+.flare-low { border-left-color: var(--moss, #6fa07a); }
+.flare-low .flare-percent { color: var(--moss, #6fa07a); }
+.flare-low .flare-fill { background: var(--moss, #6fa07a); }

@@ -37,8 +37,12 @@ export default async function DashboardPage() {
           <nav className="site-nav" aria-label="Primary">
             <a href="/profile">your record</a>
             <a href="/#app">how it works</a>
-            <UserButton />
           </nav>
+          {/* See app/page.tsx — the avatar anchors the header's right edge and
+              must never be carried onto the nav's wrap row. */}
+          <div className="header-user">
+            <UserButton />
+          </div>
         </div>
       </header>
 
