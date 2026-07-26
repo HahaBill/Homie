@@ -5,6 +5,7 @@ import OnboardingForm from "./OnboardingForm";
 import SiteHeader from "@/components/SiteHeader";
 import PhoneLink from "@/components/PhoneLink";
 import { getPatientForSession } from "@/lib/server/patient";
+import { supabaseAdmin } from "@/lib/server/supabase";
 
 export const metadata: Metadata = {
   title: "A little about you — Homie",
@@ -20,6 +21,21 @@ export default async function OnboardingPage() {
 
   const lookup = await getPatientForSession();
   const phone = lookup.ok ? lookup.patient.phone : null;
+  const { data: saved } = lookup.ok
+    ? await supabaseAdmin()
+        .from("users")
+        .select(
+          "name, consent_at, call_consent_at, transcript_consent_at, onboarding_profile",
+        )
+        .eq("id", lookup.patient.id)
+        .maybeSingle()
+    : { data: null };
+  const profile =
+    typeof saved?.onboarding_profile === "object" &&
+    saved.onboarding_profile !== null &&
+    !Array.isArray(saved.onboarding_profile)
+      ? (saved.onboarding_profile as { call_phone?: string })
+      : {};
 
   return (
     <>
@@ -30,9 +46,9 @@ export default async function OnboardingPage() {
             can show: until the number is verified the texts and calls live on
             a row this session cannot reach. */}
         <div style={{ marginBottom: 24 }}>
-          <PhoneLink currentPhone={phone} />
+          <PhoneLink currentPhone={phone} initialPhone={profile.call_phone} />
         </div>
-        <OnboardingForm />
+        <OnboardingForm initial={saved ?? undefined} />
         <p className="auth-note" style={{ textAlign: "center", marginTop: 24 }}>
           Every field is optional. Homie works fine knowing nothing.
         </p>

@@ -20,15 +20,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
  */
 export default function PhoneLink({
   currentPhone,
+  initialPhone,
   onLinked,
 }: {
   currentPhone?: string | null;
+  initialPhone?: string | null;
   onLinked?: () => void;
 }) {
   const [stage, setStage] = useState<"idle" | "code" | "done">(
     currentPhone ? "done" : "idle",
   );
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialPhone ?? "");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);

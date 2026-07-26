@@ -55,6 +55,8 @@ const CARE_OPTIONS = [
   "I'm not sure",
 ];
 
+const GENDER_OPTIONS = ["woman", "man", "non-binary", "self-describe"];
+
 const BASELINE_LABELS: Record<string, { label: string; help: string }> = {
   "1": { label: "Very well", help: "Most days feel manageable." },
   "2": {
@@ -66,29 +68,64 @@ const BASELINE_LABELS: Record<string, { label: string; help: string }> = {
   "5": { label: "Very unwell", help: "Most days need extra care or support." },
 };
 
-export default function OnboardingForm() {
-  const [name, setName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [gender, setGender] = useState("");
-  const [genderSelfDescribe, setGenderSelfDescribe] = useState("");
-  const [heightCm, setHeightCm] = useState("");
-  const [weightKg, setWeightKg] = useState("");
-  const [conditions, setConditions] = useState<string[]>([]);
+type InitialOnboardingProfile = {
+  call_phone?: string;
+  date_of_birth?: string;
+  gender?: string;
+  height_cm?: number;
+  weight_kg?: number;
+  conditions?: string[];
+  primary_condition?: string;
+  symptoms?: string[];
+  baseline_feeling?: number;
+  bad_day?: string;
+  remember?: string;
+  care_contact?: string;
+  country?: string;
+};
+
+type InitialOnboarding = {
+  name?: string | null;
+  consent_at?: string | null;
+  call_consent_at?: string | null;
+  transcript_consent_at?: string | null;
+  onboarding_profile?: InitialOnboardingProfile | null;
+};
+
+export default function OnboardingForm({
+  initial,
+}: {
+  initial?: InitialOnboarding;
+}) {
+  const profile = initial?.onboarding_profile ?? {};
+  const savedGender = profile.gender ?? "";
+  const savedGenderIsOption = GENDER_OPTIONS.includes(savedGender);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [dateOfBirth, setDateOfBirth] = useState(profile.date_of_birth ?? "");
+  const [gender, setGender] = useState(
+    savedGender && !savedGenderIsOption ? "self-describe" : savedGender,
+  );
+  const [genderSelfDescribe, setGenderSelfDescribe] = useState(
+    savedGender && !savedGenderIsOption ? savedGender : "",
+  );
+  const [heightCm, setHeightCm] = useState(profile.height_cm ? String(profile.height_cm) : "");
+  const [weightKg, setWeightKg] = useState(profile.weight_kg ? String(profile.weight_kg) : "");
+  const [conditions, setConditions] = useState<string[]>(profile.conditions ?? []);
   const [otherCondition, setOtherCondition] = useState("");
-  const [primaryCondition, setPrimaryCondition] = useState("");
-  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [primaryCondition, setPrimaryCondition] = useState(profile.primary_condition ?? "");
+  const [symptoms, setSymptoms] = useState<string[]>(profile.symptoms ?? []);
   const [otherSymptom, setOtherSymptom] = useState("");
-  const [baselineFeeling, setBaselineFeeling] = useState("3");
-  const [badDay, setBadDay] = useState("");
-  const [remember, setRemember] = useState("");
-  const [careContact, setCareContact] = useState("");
-  const [country, setCountry] = useState("United Kingdom");
+  const [baselineFeeling, setBaselineFeeling] = useState(String(profile.baseline_feeling ?? 3));
+  const [badDay, setBadDay] = useState(profile.bad_day ?? "");
+  const [remember, setRemember] = useState(profile.remember ?? "");
+  const [careContact, setCareContact] = useState(profile.care_contact ?? "");
+  const [country, setCountry] = useState(profile.country ?? "United Kingdom");
   const [medName, setMedName] = useState("");
   const [medDose, setMedDose] = useState("");
   const [medSchedule, setMedSchedule] = useState("");
-  const [briefing, setBriefing] = useState(true);
-  const [calls, setCalls] = useState(false);
-  const [transcripts, setTranscripts] = useState(true);
+  const [briefing, setBriefing] = useState(initial?.consent_at !== null);
+  const [calls, setCalls] = useState(Boolean(initial?.call_consent_at));
+  const [transcripts, setTranscripts] = useState(initial?.transcript_consent_at !== null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -165,11 +202,19 @@ export default function OnboardingForm() {
         return;
       }
       if (calls) {
-        fetch("/api/onboarding/intro-call", {
+        const callRes = await fetch("/api/onboarding/intro-call", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ phone: typedPhone }),
-        }).catch(() => undefined);
+        });
+        if (!callRes.ok) {
+          const d = (await callRes.json().catch(() => ({}))) as { error?: string };
+          setNotice(
+            d.error ??
+              "Your data saved, but Homie could not start the call just now.",
+          );
+          return;
+        }
       }
       window.location.assign(calls ? "/live?calling=1" : "/dashboard");
     } catch {
