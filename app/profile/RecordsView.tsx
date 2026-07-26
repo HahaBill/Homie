@@ -219,9 +219,8 @@ export default function RecordsView() {
         ))}
       </div>
       <p className="whoop-note">
-        {whoopSleep.source === "live"
-          ? "Live WHOOP sleep fields: score state, stage summary, respiratory rate, performance, consistency and efficiency."
-          : "Latest WHOOP-style sleep fields: score state, stage summary, respiratory rate, performance, consistency and efficiency."}
+        Realtime data from WHOOP sleep fields: score state, stage summary,
+        respiratory rate, performance, consistency and efficiency.
       </p>
     </div>
   ) : null;
