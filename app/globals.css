@@ -149,9 +149,29 @@ img {
   margin-left: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  /* Wrap whole items onto a second row rather than letting them overflow —
+     the children below are not allowed to shrink, so this is the release
+     valve that keeps the header off a horizontal scrollbar. */
+  flex-wrap: wrap;
   gap: 28px;
   font-size: 17px;
   font-weight: 700;
+}
+
+/**
+ * Every nav item stays exactly as wide as its own label.
+ *
+ * Without this the flex row shrinks items below their text width, and two
+ * things break at once: labels break mid-phrase ("how / it / works"), and
+ * the pill CTA — border-radius 999px — gets squeezed to roughly square and
+ * renders as a circle. Signed out the nav has three items and fits; signing
+ * in adds "your thread" and the avatar, which is why it only ever appeared
+ * once login worked.
+ */
+.site-nav > * {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .site-nav a {
   color: var(--ink-soft);
@@ -888,6 +908,15 @@ img {
   }
   .glass-notes {
     grid-template-columns: 1fr;
+  }
+}
+
+/* The signed-in nav carries two more items than the signed-out one, so it
+   runs out of room well before the 620px cut-off below. Tighten the gaps
+   first — losing a little spacing beats dropping a row. */
+@media (max-width: 1000px) {
+  .site-nav {
+    gap: 18px;
   }
 }
 
