@@ -2,6 +2,7 @@ import { Agent, run, setDefaultModelProvider, setTracingDisabled } from "@openai
 import { OpenAIProvider, setDefaultOpenAIKey } from "@openai/agents-openai";
 import { z } from "zod";
 import type { Env } from "./env";
+import { weatherTool } from "./tools/weather";
 import type { ParsedReply } from "./types";
 
 // Imported from @openai/agents-core + @openai/agents-openai directly instead
@@ -68,7 +69,17 @@ Then write reply_text, the next thing Homie says back. Rules, no exceptions:
 - Give an easy way to not continue (never demand more detail).
 - If the reply already contains red-flag emergency language, you will not be called — a
   hard-coded rule handles that before you ever see the message. Do not attempt to triage
-  urgency yourself.`;
+  urgency yourself.
+
+Tools:
+- You have a \`weather\` tool. Call it when they ask about the weather, the pressure, the
+  sun, the heat, or how the day looks outside. Report what it gives you plainly, still
+  inside every rule above, and still under 12 words.
+- Never turn a weather reading into a prediction about their symptoms. "pressure's dropping
+  today" is a fact and is fine. "you'll flare tomorrow" is a forecast about their body and
+  is never allowed. You may say a pattern has happened before; you may not say it will
+  happen again.
+- Do not call the tool for an ordinary day update that never mentions the weather.`;
 
 // One Agent per isolate — instructions and schema are static, and the model
 // name is the same on every request of a deployment, so there's no reason to
@@ -83,6 +94,7 @@ function agentFor(env: Env): Agent<unknown, typeof ParsedReplySchema> {
       instructions: INSTRUCTIONS,
       model: env.OPENAI_MODEL,
       modelSettings: { temperature: 0.2 },
+      tools: [weatherTool],
       outputType: ParsedReplySchema,
     });
     cachedModel = env.OPENAI_MODEL;
