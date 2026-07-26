@@ -53,11 +53,20 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="site-nav" aria-label="Primary">
-          <Link href="/#app">how it works</Link>
+          {/* Signed in, the marketing anchor is dead weight — "how it works"
+              explains a product they are already inside. The row becomes the
+              two real destinations instead, named exactly as the account menu
+              names them so the same place is never called two things. */}
           {isSignedIn ? (
-            <Link href="/dashboard">your thread</Link>
+            <>
+              <Link href="/dashboard">the thread</Link>
+              <Link href="/profile">your record</Link>
+            </>
           ) : (
-            <Link href="/sign-in">sign in</Link>
+            <>
+              <Link href="/#app">how it works</Link>
+              <Link href="/sign-in">sign in</Link>
+            </>
           )}
           {/* Signed in, the primary action is the thread, not another trip
               through sign-in — which is where this button used to point
