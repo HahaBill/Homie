@@ -1,73 +1,263 @@
+<div align="center">
+
 # Homie
 
-> Homie checks in, so you don't have to keep track.
+**Someone who notices — a proactive companion for living with multimorbidity that checks in first, holds one continuous thread across iMessage, voice and the web, and hands the GP one coherent picture.**
 
-**Live:** https://meet-homie.vercel.app
+[![Next.js](https://img.shields.io/badge/Next.js-14-E8823F?style=for-the-badge&labelColor=2E2622&logo=nextdotjs&logoColor=E8823F)](https://nextjs.org)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-E8823F?style=for-the-badge&labelColor=2E2622&logo=cloudflare&logoColor=E8823F)](https://workers.cloudflare.com)
+[![Supabase](https://img.shields.io/badge/Data-Supabase-E8823F?style=for-the-badge&labelColor=2E2622&logo=supabase&logoColor=E8823F)](https://supabase.com)
+[![Voice](https://img.shields.io/badge/Voice-Vapi-E8823F?style=for-the-badge&labelColor=2E2622)](https://vapi.ai)
+[![OpenAI](https://img.shields.io/badge/Reasoning-OpenAI-E8823F?style=for-the-badge&labelColor=2E2622&logo=openai&logoColor=E8823F)](https://openai.com)
+[![Hono](https://img.shields.io/badge/API-Hono-E8823F?style=for-the-badge&labelColor=2E2622)](https://hono.dev)
 
-Homie texts you every morning, notices the pattern between the weather, your
-sleep and how you feel, and turns ninety days of it into one page you hand your
-consultant. No app, no account — it arrives as a text message.
+[Live app](https://meet-homie.vercel.app) · Encode Hub · Consumer Health Hackathon, London
 
-Built for the Consumer Health Hackathon, Encode Hub London.
+</div>
+
+---
+
+## The bottleneck is multimorbidity
+
+[Multimorbidity](https://www.appt-health.co.uk/blog/multimorbidity-explained-what-it-is-and-the-impact-on-the-nhs) = living with **two or more long-term conditions at once**. That is already how a huge share of the NHS works.
+
+**At a glance**
+
+- **~1 in 4** adults in England · **~73%** of people 65+
+- **~50%** of NHS admissions, outpatients, and GP consultations
+- **>50%** of analysed NHS costs · **~75%** of primary-care prescription spend · order of **£90bn**
+- People with **4+** conditions: **28.9** GP-side consults vs **10** (single condition) in two years — yet only **~+14 seconds** more per visit · **20.6** different meds vs **5.6**
+- Trajectory: **+14%** hospital activity / **+£4bn** over five years if trends hold
+
+Sources: [DHSC Major Conditions Strategy](https://www.gov.uk/government/publications/major-conditions-strategy-case-for-change-and-our-strategic-framework/major-conditions-strategy-case-for-change-and-our-strategic-framework--2) · [Health Foundation 2018](https://www.health.org.uk/sites/default/files/upload/publications/2018/Understanding%20the%20health%20care%20needs%20of%20people%20with%20multiple%20health%20conditions.pdf) · [Appt Health](https://www.appt-health.co.uk/blog/multimorbidity-explained-what-it-is-and-the-impact-on-the-nhs) · full brief in [`docs/MULTIMORBIDITY.md`](docs/MULTIMORBIDITY.md)
+
+Systems (and most apps) are still built for **one disease at a time**. Different specialists, conflicting meds, months between appointments — the patient becomes the unpaid integration layer. The industry calls that **"self-management."** We think that's the problem.
+
+The GP is the orchestrator. Homie makes their job — and her life — easier: one picture of the whole person, where she already talks, reaching out first when something shifts, and one page for the consultant. It **notices, connects, and routes**. It never diagnoses or changes a dose.
+
+People with SLE are already ~**3×** as likely to live with multimorbidity as matched peers ([Rheumatology](https://doi.org/10.1093/rheumatology/kead617)) — lupus / RA is the right first wedge.
+
+Because chronic conditions don't end when appointments do. Neither should care.
+
+---
+
+## See it live
+
+**App:** [meet-homie.vercel.app](https://meet-homie.vercel.app)
+
+Homie on a phone — the warm cream icon in iOS **Recently Added**. Not another clinical portal buried in a folder: a companion that sits next to the apps she already opens, and mostly shows up as a text.
+
+<p align="center">
+  <img src="docs/images/ios-home.png" alt="Homie app icon on iOS Recently Added — cream tile with the Homie face" width="360" />
+</p>
+
+| Landing | Your record | The thread |
+| --- | --- | --- |
+| ![Homie landing — someone who notices](docs/images/landing.png) | ![Unified record — WHOOP, weather, flare context, timeline](docs/images/record.png) | ![iMessage — Homie checks in so you don't have to](docs/images/imessage.png) |
+
+| Surface | URL |
+| --- | --- |
+| Marketing + web app | https://meet-homie.vercel.app |
+| Sign in → live thread | [/dashboard](https://meet-homie.vercel.app/dashboard) |
+| Unified record | [/profile](https://meet-homie.vercel.app/profile) |
+| Worker health | https://homie-worker.bill-nguyentonhoang.workers.dev/health |
+| Signed report (tokenised) | `https://homie-worker…/r/:token` — minted from the thread |
+
+---
+
+## What it does
+
+- Checks in by **iMessage** most mornings — free text, never a form — and only calls when something has shifted.
+- Reads **WHOOP sleep** and **barometric weather**, and keeps a personal baseline of what's normal *for you*.
+- Runs a **deterministic safety layer** first: red-flag language → NHS 999/111 guidance; exact `STOP` / `DELETE` / `MY DATA`.
+- Structures every reply into observations (pain, areas, meds) without guessing certainty.
+- Holds **one continuous record** — texts, web chat, and Vapi call transcripts on a single timeline.
+- Hands you a **signed, printable report** with pressure and symptom lines as inline SVG — built to give a rheumatologist, not a dashboard to chase.
+- Never advises, diagnoses, or changes a dose. When something looks wrong, it says so plainly and points at a person.
+
+---
+
+## How it works
+
+One rule runs everything: **the model reasons, deterministic code decides.** The LLM can compose a gentle reply; it cannot override a red-flag rule or invent medical advice. iMessage, voice, and the web are only surfaces. The patient record lives once, in Supabase.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#E8823F','primaryTextColor':'#2E2622','primaryBorderColor':'#D2643C','lineColor':'#E8823F','clusterBkg':'#FBF4EA','clusterBorder':'#EDE1D3'}}}%%
+flowchart LR
+  signals([Weather · WHOOP · last reply]) --> cron[Morning cadence · Vercel]
+  cron -->|Sendblue| thread[iMessage thread]
+  thread -->|webhook| worker[Homie Worker · Hono]
+  web[Web chat · Clerk] -->|/chat| worker
+  voice[Vapi call] -->|end-of-call| worker
+  worker --> safety[Safety layer]
+  safety -->|parse + reply| ai[OpenAI Agents]
+  safety --> db[(Supabase · one patient)]
+  ai --> db
+  db --> report[Signed report /r/:token]
+  db --> record[Unified record · /profile]
+  report --> patient([Patient])
+  record --> clinician([GP / consultant])
+```
+
+| Part | What it does | Status |
+| --- | --- | --- |
+| Morning cadence | Quiet-hours cron, weather + last-reply memory, Sendblue outbound | Built |
+| Safety layer | Red-flag substring bypass, STOP / DELETE / MY DATA — before the model | Built |
+| Reply agent | OpenAI Agents SDK: structure observations + compose reply; weather tool | Built |
+| Voice | Vapi outbound intro + webhooks → `calls` as check-ins | Built |
+| Unified record | Timeline of texts + calls, WHOOP sleep, pressure context, printable report | Built |
+| Consent | Explicit text / call / transcript consents before outreach | Built |
+
+---
+
+## Why this is a multimorbidity product
+
+Single-condition tools organise around one disease. In multimorbidity the danger lives **between** conditions — and between appointments.
+
+| Fragmented care today | What Homie does instead |
+| --- | --- |
+| Notebooks, Notes apps, specialty portals | One thread the patient already has |
+| “How have you been?” with eleven weeks blank | Daily free-text → structured observations |
+| GP as unpaid integration layer | One record: sleep, pressure, meds, her words, calls |
+| Apps that score and streak | No grades. Ignore Homie for three days — nothing breaks |
+| Advice that can conflict across conditions | Homie never advises a dose; it notices and routes |
+
+Homie's first build focuses on **lupus / rheumatoid arthritis** — pressure, sleep, pain, meds — because that is a sharp, demoable slice of the same orchestration problem the NHS named. The architecture (one patient identity, multi-channel thread, safety-first agent, clinician-facing page) is built for cross-condition care.
+
+---
+
+## Care lifecycle
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#E8823F','primaryTextColor':'#2E2622','primaryBorderColor':'#D2643C','lineColor':'#E8823F'}}}%%
+stateDiagram-v2
+  [*] --> watching
+  watching --> morning: cron · consented users
+  morning --> open_checkin: Sendblue message sent
+  open_checkin --> replied: free-text inbound
+  replied --> structured: safety → model → observation
+  structured --> watching: thread continues
+  watching --> calling: intro / shifted days
+  calling --> structured: Vapi end-of-call → check-in
+  structured --> report: she asks · signed link
+  replied --> escalated: red flag → NHS guidance
+  escalated --> watching: human help; Homie still held
+```
+
+---
+
+## Run it
+
+This repo is an informal monorepo: **Next.js on Vercel** (app + cron) and a **Cloudflare Worker** (thread, voice webhooks, report).
+
+```bash
+# App
+npm install
+cp .env.example .env.local   # fill secrets — see below
+npm run dev                  # http://localhost:3000
+
+# Worker
+cd worker
+npm install
+cp .dev.vars.example .dev.vars
+npm run typecheck
+npm run dev                  # http://localhost:8787
+```
+
+Apply schema from the repo root:
+
+```bash
+npx supabase db push
+```
+
+Provider webhooks cannot reach `wrangler dev` on localhost — iterate against the deployed worker with `npm run tail` inside `worker/`.
+
+```bash
+# Deploy
+git push origin main         # Vercel auto-deploys the app
+cd worker && npm run deploy  # or GitHub Action on worker/**
+```
+
+### Secrets (high level)
+
+See [`.env.example`](.env.example) and [`worker/.dev.vars.example`](worker/.dev.vars.example).
+
+| Concern | Variables |
+| --- | --- |
+| Data | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
+| Auth | Clerk publishable + secret keys |
+| Messaging | `SENDBLUE_*` |
+| Worker bridge | `WORKER_URL`, `WORKER_ADMIN_TOKEN`, `LINK_SIGNING_SECRET` |
+| Voice | `VAPI_API_KEY`, `VAPI_ASSISTANT_ID`, `VAPI_PHONE_NUMBER_ID`, `VAPI_WEBHOOK_SECRET` |
+| Wearable | `WHOOP_ACCESS_TOKEN` (server-side; record page) |
+| Cron | `CRON_SECRET` |
+
+---
+
+## Project layout
+
+```
+app/                     Next.js App Router — landing, auth, dashboard, record, APIs
+components/              Site chrome + shadcn/ui primitives
+lib/server/              Patient bridge, records, WHOOP, Vapi sync, tokens, weather
+worker/src/              Hono: Sendblue, /chat, /r/:token, Vapi, safety, AI
+supabase/migrations/     Shared Postgres schema (RLS scaffolding; service-role in prod)
+docs/
+  PRD.md                 Scope, persona, safety gates, non-goals
+  ARCHITECTURE.md        Runtime split, caching, link security
+  images/                Landing, record, iMessage screenshots
+```
+
+---
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| Web app | Next.js 14 App Router on Vercel · Clerk · Tailwind / Homie design tokens |
+| Thread + report | Cloudflare Worker · Hono · OpenAI Agents SDK |
+| Messaging | Sendblue (iMessage / SMS) |
+| Voice | Vapi (outbound + end-of-call webhooks) |
+| Data | Supabase Postgres |
+| Weather | Open-Meteo (barometric pressure) |
+| Wearable | WHOOP sleep API (live token; scopes minimised) |
+| Charts | Server-rendered inline SVG — no charting library, prints clean |
+
+---
 
 ## Documents
 
 | Doc | What it covers |
 | --- | --- |
-| [`docs/PRD.md`](docs/PRD.md) | Source of truth for **scope**. Problem, persona, non-goals, safety gates, data model, build order, demo script |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Source of truth for **runtime**. Where each piece runs, why the report page is pre-rendered, caching rules |
+| [`docs/PRD.md`](docs/PRD.md) | Scope, persona, safety gates, data model, demo |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Runtime split, report caching rules, link security |
+| [`docs/MULTIMORBIDITY.md`](docs/MULTIMORBIDITY.md) | Evidence, NHS stats, SLE wedge, pitch script + source list |
+| [Appt Health — Multimorbidity explained](https://www.appt-health.co.uk/blog/multimorbidity-explained-what-it-is-and-the-impact-on-the-nhs) | Accessible summary of the bottleneck |
+| [DHSC Major Conditions Strategy](https://www.gov.uk/government/publications/major-conditions-strategy-case-for-change-and-our-strategic-framework/major-conditions-strategy-case-for-change-and-our-strategic-framework--2) | Official case for change |
+| [Health Foundation 2018](https://www.health.org.uk/sites/default/files/upload/publications/2018/Understanding%20the%20health%20care%20needs%20of%20people%20with%20multiple%20health%20conditions.pdf) | Consultation, specialty, and polypharmacy burden |
 
-## Design system — warm apricot v2
+---
 
-Transcribed from PRD §13. These are constraints, not suggestions.
+## Design system — warm apricot
 
 | Token | Value | Role |
 | --- | --- | --- |
 | `--oat` | `#FBF4EA` | Page background |
 | `--milk` | `#FFFCF7` | Card surface |
-| `--edge` | `#EDE1D3` | Borders — the only separator, since there are no shadows |
-| `--apricot` | `#E8823F` | **One element per screen.** Nothing else |
-| `--clay` | `#D2643C` | Her voice in the thread, symptom line |
-| `--ink` / `--cocoa` / `--mushroom` | `#2E2622` / `#5C4C43` / `#8C7B70` | Text, descending emphasis |
+| `--edge` | `#EDE1D3` | Borders — the only separator |
+| `--apricot` | `#E8823F` | **One primary element per screen** |
+| `--clay` | `#D2643C` | Her voice in the thread |
+| `--ink` / `--cocoa` / `--mushroom` | `#2E2622` / `#5C4C43` / `#8C7B70` | Text hierarchy |
 | `--alert` | `#B4291F` | **999 path only** |
 
-- **Fraunces 600** for the name and the one feeling line per screen
-- **Nunito Sans, 18px minimum**, tabular figures, for everything else
-- 20px cards, 22px bubbles, 52px pill buttons and tap targets
-- No gradients, no glass, no shadows, no emoji, no exclamation marks
+18px body minimum · 52px tap targets · no scores, streaks, or exclamation marks.
 
-The 18px floor and 52px targets come from the persona in PRD §3 — a woman in
-her sixties whose hands hurt and whose eyes are tired. They are accessibility
-requirements, not taste.
+---
 
-## The chart is inline SVG
+<div align="center">
 
-The symptom and pressure lines are server-rendered SVG with no charting
-library and no client JavaScript. It renders with JS disabled and prints at
-vector quality — which matters, because the page exists to be printed and
-handed to a rheumatologist. See `docs/ARCHITECTURE.md`.
+The patient was never meant to be the integration layer.
 
-## Develop
+**Homie checks in, so you don't have to keep track.**
 
-```bash
-npm install
-npm run dev      # http://localhost:3000
-```
-
-## Build
-
-```bash
-npm run build
-npm start
-```
-
-## Deploy
-
-Connected to Vercel — pushes to `main` deploy to production automatically, and
-pull requests get preview URLs.
-
-## Stack
-
-- Next.js 14 (App Router) · React 18 · TypeScript
-- No runtime dependencies beyond React and Next. The page is static and
-  self-contained.
+</div>
