@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import OnboardingForm from "./OnboardingForm";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "A little about you — Homie",
@@ -17,20 +18,7 @@ export default async function OnboardingPage() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="inner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-mark" src="/homie-logo.jpg" alt="" />
-          <a href="/home" className="wordmark" aria-label="Homie, home">
-            Homie
-          </a>
-          <div className="header-actions" style={{ marginLeft: "auto" }}>
-            <a className="btn btn-quiet btn-sm" href="/dashboard">
-              skip for now
-            </a>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="auth-wrap" style={{ maxWidth: 620 }}>
         <OnboardingForm />

@@ -3,6 +3,9 @@ import { homieAppearance, homieLocalization } from "@/lib/clerk-appearance";
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+// After globals.css on purpose: Tailwind utilities need to win inside shadcn
+// components. Carries no reset — preflight is off (see tailwind.config.ts).
+import "./shadcn.css";
 
 const fredoka = Fredoka({
   subsets: ["latin"],

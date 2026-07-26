@@ -3,43 +3,16 @@
    The app section's thread goes live for signed-in visitors — see
    AppShowcase.tsx and app/api/thread/route.ts. */
 
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
 import AppShowcase from "./AppShowcase";
+import SiteHeader from "@/components/SiteHeader";
 
 const LOGO = "/homie-logo.jpg";
 
 export default function Home() {
   return (
     <>
-      <header className="site-header">
-        <div className="inner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-mark" src={LOGO} alt="" />
-          <a href="/" className="wordmark" aria-label="Homie, home">
-            Homie
-          </a>
-          <nav className="site-nav" aria-label="Primary">
-            <a href="#app">how it works</a>
-            <SignedOut>
-              <a href="/sign-in">sign in</a>
-            </SignedOut>
-            <SignedIn>
-              <a href="#app">your thread</a>
-            </SignedIn>
-            <a className="btn btn-primary btn-sm" href="/sign-in">
-              start with a text
-            </a>
-          </nav>
-          {/* Outside .site-nav on purpose: the nav wraps whole items onto a
-              second row when it runs out of width, and the avatar is the one
-              thing that must not move — it anchors the header's right edge. */}
-          <SignedIn>
-            <div className="header-user">
-              <UserButton />
-            </div>
-          </SignedIn>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         {/* Hero ------------------------------------------------------------ */}

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { UserButton } from "@clerk/nextjs";
+
 import { getPatientForSession } from "@/lib/server/patient";
 import ThreadChat from "./ThreadChat";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "Your thread — Homie",
@@ -27,24 +28,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="inner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="brand-mark" src="/homie-logo.jpg" alt="" />
-          <a href="/home" className="wordmark" aria-label="Homie, home">
-            Homie
-          </a>
-          <nav className="site-nav" aria-label="Primary">
-            <a href="/profile">your record</a>
-            <a href="/#app">how it works</a>
-          </nav>
-          {/* See app/page.tsx — the avatar anchors the header's right edge and
-              must never be carried onto the nav's wrap row. */}
-          <div className="header-user">
-            <UserButton />
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="wrap" style={{ paddingTop: 32, paddingBottom: 88 }}>
         <div className="app-head">

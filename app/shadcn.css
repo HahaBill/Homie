@@ -1,0 +1,14 @@
+/* ==========================================================================
+   Tailwind layers for shadcn/ui only.
+
+   Imported after globals.css so utilities can win where a shadcn component
+   needs them, without globals.css ever being the file the shadcn CLI writes
+   into. `@tailwind base` emits nothing but @layer scaffolding here, because
+   preflight is disabled in tailwind.config.ts — see the note there for why
+   that matters (Tailwind's reset would restyle every bare element the design
+   system already owns).
+   ========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
