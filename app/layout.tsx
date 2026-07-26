@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { homieAppearance, homieLocalization } from "@/lib/clerk-appearance";
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 // After globals.css on purpose: Tailwind utilities need to win inside shadcn
 // components. Carries no reset — preflight is off (see tailwind.config.ts).
@@ -87,6 +88,7 @@ export default function RootLayout({
         >
           {children}
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
