@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "./supabase";
 import { computeFlareRisk, type FlareRisk } from "./flare";
+import { normalizePhone } from "./phone";
 
 /**
  * The unified record: one chronological view of everything Homie holds for a
@@ -84,20 +85,59 @@ export async function getUnifiedRecords(
 ): Promise<UnifiedRecords> {
   const db = supabaseAdmin();
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
+  const { data: patient } = await db
+    .from("users")
+    .select("phone, onboarding_profile")
+    .eq("id", patientId)
+    .maybeSingle();
+  const profile =
+    typeof patient?.onboarding_profile === "object" &&
+    patient.onboarding_profile !== null &&
+    !Array.isArray(patient.onboarding_profile)
+      ? patient.onboarding_profile as { call_phone?: string }
+      : {};
+  const callPhones = Array.from(
+    new Set(
+      [patient?.phone, profile.call_phone]
+        .map((phone) => {
+          try {
+            return phone ? normalizePhone(phone) : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter((phone): phone is string => Boolean(phone)),
+    ),
+  );
+  const linkedUsers =
+    callPhones.length > 0
+      ? await db.from("users").select("id").in("phone", callPhones)
+      : { data: [], error: null };
+  const patientIds = Array.from(
+    new Set([patientId, ...((linkedUsers.data ?? []) as Array<{ id: string }>).map((u) => u.id)]),
+  );
 
-  const [checkins, calls, weather, observations] = await Promise.all([
+  const [checkins, callsByUser, callsByPhone, weather, observations] = await Promise.all([
     db
       .from("checkins")
       .select("id, sent_at, message_text, replied_at, reply_text")
-      .eq("user_id", patientId)
+      .in("user_id", patientIds)
       .order("sent_at", { ascending: true })
       .limit(200),
     db
       .from("calls")
       .select("vapi_call_id, started_at, created_at, duration_seconds, ended_reason, summary, transcript, recording_url")
-      .eq("user_id", patientId)
+      .in("user_id", patientIds)
       .order("created_at", { ascending: true })
       .limit(100),
+    callPhones.length > 0
+      ? db
+          .from("calls")
+          .select("vapi_call_id, started_at, created_at, duration_seconds, ended_reason, summary, transcript, recording_url")
+          .in("phone", callPhones)
+          .order("created_at", { ascending: true })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
     db
       .from("weather")
       .select("date, pressure_delta_24h")
@@ -127,7 +167,16 @@ export async function getUnifiedRecords(
     }
   }
 
-  for (const call of calls.data ?? []) {
+  const calls = Array.from(
+    new Map(
+      [...(callsByUser.data ?? []), ...(callsByPhone.data ?? [])].map((call) => [
+        call.vapi_call_id,
+        call,
+      ]),
+    ).values(),
+  );
+
+  for (const call of calls) {
     timeline.push({
       kind: "call",
       at: call.started_at ?? call.created_at,
@@ -156,7 +205,7 @@ export async function getUnifiedRecords(
 
   return {
     timeline,
-    callCount: calls.data?.length ?? 0,
+    callCount: calls.length,
     messageCount: timeline.filter((t) => t.kind === "message").length,
     correlation,
     whoopSleep: mockWhoopSleep(),
