@@ -1438,3 +1438,79 @@ img {
   .wx-tiles { grid-template-columns: 1fr; }
   .wx-icon { max-width: 64px; }
 }
+
+/* Daily summary — asked for, not fired on load. */
+.summary-card {
+  border-left: 4px solid var(--apricot);
+}
+.summary-lede {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.summary-focus {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.summary-notable {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.summary-notable li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.summary-notable li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--apricot);
+}
+.summary-suggestion {
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: var(--peach);
+  border-radius: 16px;
+}
+.summary-suggestion .mono {
+  color: var(--clay);
+  font-size: 10px;
+  display: block;
+  margin-bottom: 8px;
+}
+.summary-suggestion p {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.summary-foot {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--label);
+}
+.summary-again {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--clay);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { getPatientForSession } from "@/lib/server/patient";
 import ThreadChat from "./ThreadChat";
+import DailySummary from "./DailySummary";
 import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
           <ThreadChat />
 
           <div className="side-cards">
+            <DailySummary />
             {/* Onboarding is parked for now — no setup gate stands between
                 signing in and the thread. Consent for morning texts is
                 captured separately when that flow returns. */}

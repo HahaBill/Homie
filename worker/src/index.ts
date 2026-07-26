@@ -12,6 +12,7 @@ import {
   type SafetyCommand,
 } from "./safety";
 import { linkProblemHtml, reportHtml } from "./report";
+import { buildDailySummary } from "./summary";
 import {
   claimWebhookEvent,
   closeCheckinWithReply,
@@ -482,6 +483,49 @@ app.get("/r/:token", async (c) => {
     // page, never a bare 500.
     log({ event: "report_render_failed", error: err instanceof Error ? err.message : String(err) });
     return c.html(linkProblemHtml("error"), 500, noStore);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Daily summary, on demand. Reads across every surface — texts, web chat and
+// voice-call transcripts all hang off one users row — and returns what Homie
+// has noticed, what stands out, and one suggested next step.
+//
+// Server-to-server: the Next.js app resolves the Clerk session to a users row
+// and sends its id. A browser never reaches this directly.
+// ---------------------------------------------------------------------------
+
+app.post("/summary", async (c) => {
+  if (!c.env.WORKER_ADMIN_TOKEN) {
+    return c.json({ error: "WORKER_ADMIN_TOKEN not configured — route disabled" }, 501);
+  }
+  if (!secretsMatch(c.req.header("Authorization"), `Bearer ${c.env.WORKER_ADMIN_TOKEN}`)) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  const body = await c.req.json<{ user_id?: string }>().catch(() => ({}) as { user_id?: string });
+  if (!body.user_id) return c.json({ error: "user_id is required" }, 400);
+
+  const user = await getUserById(c.env, body.user_id);
+  if (!user) return c.json({ error: "unknown user" }, 404);
+
+  try {
+    const summary = await buildDailySummary(c.env, user.id);
+    if (!summary) {
+      return c.json({ empty: true, reason: "no history in the window yet" });
+    }
+    // Length only, never the prose — audit_log is insert-only and outlives
+    // erasure, and a summary is as much health data as the thread it reads.
+    await insertAuditLog(c.env, user.id, "daily_summary_generated", {
+      messages: summary.sources.messages,
+      calls: summary.sources.calls,
+    }).catch((err) => log({ event: "summary_audit_failed", error: String(err) }));
+
+    log({ event: "daily_summary", user_id: user.id, calls: summary.sources.calls });
+    return c.json(summary);
+  } catch (err) {
+    log({ event: "daily_summary_failed", error: err instanceof Error ? err.message : String(err) });
+    return c.json({ error: "summary failed" }, 500);
   }
 });
 
