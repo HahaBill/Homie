@@ -61,22 +61,17 @@ export default function SiteHeader() {
             <>
               <Link href="/dashboard">the thread</Link>
               <Link href="/profile">your record</Link>
+              <Link href="/onboarding">settings and consent</Link>
             </>
           ) : (
             <>
               <Link href="/#app">how it works</Link>
               <Link href="/sign-in">sign in</Link>
+              <Link className="btn btn-primary btn-sm" href="/sign-in">
+                start with a text
+              </Link>
             </>
           )}
-          {/* Signed in, the primary action is the thread, not another trip
-              through sign-in — which is where this button used to point
-              regardless of session. */}
-          <Link
-            className="btn btn-primary btn-sm"
-            href={isSignedIn ? "/dashboard" : "/sign-in"}
-          >
-            {isSignedIn ? "open my thread" : "start with a text"}
-          </Link>
         </nav>
 
         {isLoaded && isSignedIn ? (
