@@ -12,6 +12,9 @@ export interface Env {
   OPENAI_API_KEY: string;
   OPENAI_MODEL: string;
 
+  /** Shared secret Vapi sends on its webhook. Route refuses if unset. */
+  VAPI_WEBHOOK_SECRET?: string;
+
   /** Required bearer token for POST /send-test. Route refuses if unset. */
   WORKER_ADMIN_TOKEN?: string;
 

@@ -1,4 +1,5 @@
-import {ClerkProvider} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { homieAppearance, homieLocalization } from "@/lib/clerk-appearance";
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -75,7 +76,12 @@ export default function RootLayout({
       <body
         className={`${fredoka.variable} ${nunito.variable} ${jetbrainsMono.variable}`}
       >
-        <ClerkProvider>
+        {/* One Clerk config for every surface — sign-in, sign-up and the
+            dashboard's <UserButton />. See lib/clerk-appearance.ts. */}
+        <ClerkProvider
+          appearance={homieAppearance}
+          localization={homieLocalization}
+        >
           {children}
         </ClerkProvider>
       </body>

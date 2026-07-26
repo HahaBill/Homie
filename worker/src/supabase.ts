@@ -329,3 +329,44 @@ export async function getDataSummary(env: Env, user: User): Promise<DataSummary>
     first_checkin_at: (data?.[0] as { sent_at: string } | undefined)?.sent_at ?? null,
   };
 }
+
+/**
+ * A Vapi call report. Keyed on vapi_call_id so a webhook retry (or the
+ * status-update that precedes the end-of-call report) updates the same row
+ * rather than duplicating the call.
+ *
+ * user_id is resolved by the caller and may be null: an unknown number is
+ * recorded as an unlinked call rather than minting a patient nobody
+ * consented to being.
+ */
+export async function upsertCall(
+  env: Env,
+  row: {
+    vapi_call_id: string;
+    user_id: string | null;
+    phone: string | null;
+    direction: string | null;
+    status: string | null;
+    ended_reason: string | null;
+    started_at: string | null;
+    ended_at: string | null;
+    duration_seconds: number | null;
+    cost: number | null;
+    summary: string | null;
+    transcript: string | null;
+    recording_url: string | null;
+    payload: unknown;
+  }
+): Promise<void> {
+  const db = client(env);
+  const { error } = await db.from("calls").upsert(row, { onConflict: "vapi_call_id" });
+  if (error) throw new Error(`upsertCall: ${error.message}`);
+}
+
+/** Look up a patient by phone WITHOUT creating one. */
+export async function findUserByPhone(env: Env, phone: string): Promise<User | null> {
+  const db = client(env);
+  const { data, error } = await db.from("users").select("*").eq("phone", phone).maybeSingle();
+  if (error) throw new Error(`findUserByPhone: ${error.message}`);
+  return (data as User | null) ?? null;
+}
