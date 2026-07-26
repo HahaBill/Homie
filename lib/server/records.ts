@@ -2,6 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "./supabase";
 import { computeFlareRisk, type FlareRisk } from "./flare";
 import { normalizePhone } from "./phone";
+import { fetchWhoopSleep, summarizeWhoopSleep } from "./whoop";
 
 /**
  * The unified record: one chronological view of everything Homie holds for a
@@ -61,7 +62,7 @@ export type UnifiedRecords = {
   /** Null when today's pressure was not supplied by the caller. */
   flareRisk: FlareRisk | null;
   whoopSleep: {
-    source: "mock";
+    source: "live" | "sample";
     windowDays: 7;
     days: WhoopSleepDay[];
     averages: {
@@ -117,7 +118,7 @@ export async function getUnifiedRecords(
     new Set([patientId, ...((linkedUsers.data ?? []) as Array<{ id: string }>).map((u) => u.id)]),
   );
 
-  const [checkins, callsByUser, callsByPhone, weather, observations] = await Promise.all([
+  const [checkins, callsByUser, callsByPhone, weather, observations, whoopSleep] = await Promise.all([
     db
       .from("checkins")
       .select("id, sent_at, message_text, replied_at, reply_text")
@@ -149,6 +150,7 @@ export async function getUnifiedRecords(
       .select("pain_level, created_at, checkin_id")
       .order("created_at", { ascending: true })
       .limit(400),
+    fetchWhoopSleep(),
   ]);
 
   const timeline: TimelineItem[] = [];
@@ -208,7 +210,7 @@ export async function getUnifiedRecords(
     callCount: calls.length,
     messageCount: timeline.filter((t) => t.kind === "message").length,
     correlation,
-    whoopSleep: mockWhoopSleep(),
+    whoopSleep: whoopSleep ?? sampleWhoopSleep(),
     flareRisk:
       pressureDelta24h === null && correlation.pressureDrops === 0
         ? null
@@ -221,7 +223,7 @@ export async function getUnifiedRecords(
   };
 }
 
-function mockWhoopSleep(): UnifiedRecords["whoopSleep"] {
+function sampleWhoopSleep(): UnifiedRecords["whoopSleep"] {
   const now = new Date();
   const template = [
     { performance: 82, consistency: 75, efficiency: 89, respiratory: 16.3, inBed: 8.1, asleep: 7.2, disturbances: 14 },
@@ -254,27 +256,7 @@ function mockWhoopSleep(): UnifiedRecords["whoopSleep"] {
       disturbanceCount: day.disturbances,
     };
   });
-  const avg = (field: keyof Pick<
-    WhoopSleepDay,
-    | "sleepPerformancePercentage"
-    | "sleepConsistencyPercentage"
-    | "sleepEfficiencyPercentage"
-    | "respiratoryRate"
-    | "totalSleepHours"
-  >) => Number((days.reduce((sum, day) => sum + day[field], 0) / days.length).toFixed(1));
-
-  return {
-    source: "mock",
-    windowDays: 7,
-    days,
-    averages: {
-      sleepPerformancePercentage: avg("sleepPerformancePercentage"),
-      sleepConsistencyPercentage: avg("sleepConsistencyPercentage"),
-      sleepEfficiencyPercentage: avg("sleepEfficiencyPercentage"),
-      respiratoryRate: avg("respiratoryRate"),
-      totalSleepHours: avg("totalSleepHours"),
-    },
-  };
+  return summarizeWhoopSleep("sample", days);
 }
 
 /**

@@ -63,7 +63,7 @@ type Profile = {
 };
 
 type WhoopSleep = {
-  source: "mock";
+  source: "live" | "sample";
   windowDays: 7;
   days: Array<{
     date: string;
@@ -183,7 +183,9 @@ export default function RecordsView() {
   const whoopCard = whoopSleep ? (
     <div className="side-card whoop-card">
       <div className="whoop-card-head">
-        <span className="mono">MOCK WHOOP · 7 DAYS</span>
+        <span className="mono">
+          {whoopSleep.source === "live" ? "LIVE WHOOP" : "WHOOP SAMPLE"} · 7 DAYS
+        </span>
         <Badge variant="outline">Sleep</Badge>
       </div>
       <div className="whoop-hero">
@@ -206,7 +208,10 @@ export default function RecordsView() {
         <span>{whoopSleep.averages.sleepConsistencyPercentage}% consistency</span>
         <span>{whoopSleep.averages.sleepEfficiencyPercentage}% efficiency</span>
       </div>
-      <div className="whoop-days" aria-label="Mock WHOOP sleep performance over the last 7 days">
+      <div
+        className="whoop-days"
+        aria-label={`${whoopSleep.source === "live" ? "Live" : "Sample"} WHOOP sleep performance over the last 7 days`}
+      >
         {whoopSleep.days.map((day) => (
           <div key={day.date} className="whoop-day">
             <i style={{ height: `${Math.max(22, day.sleepPerformancePercentage)}%` }} />
@@ -216,9 +221,9 @@ export default function RecordsView() {
         ))}
       </div>
       <p className="whoop-note">
-        Mock data shaped from WHOOP sleep fields: score state, stage
-        summary, respiratory rate, performance, consistency and
-        efficiency.
+        {whoopSleep.source === "live"
+          ? "Live WHOOP sleep fields: score state, stage summary, respiratory rate, performance, consistency and efficiency."
+          : "Sample WHOOP-style sleep fields shown until a live WHOOP access token is connected."}
       </p>
     </div>
   ) : null;
