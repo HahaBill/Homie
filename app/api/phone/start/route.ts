@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const { data: existingProfile, error: profileError } = await db
     .from("users")
-    .select("onboarding_profile")
+    .select("phone, onboarding_profile")
     .eq("id", lookup.patient.id)
     .maybeSingle();
   if (profileError) {
@@ -61,9 +61,25 @@ export async function POST(req: NextRequest) {
     !Array.isArray(existingProfile.onboarding_profile)
       ? existingProfile.onboarding_profile
       : {};
+  const profilePatch: Record<string, unknown> = {
+    onboarding_profile: { ...profile, call_phone: phone },
+  };
+  if (!existingProfile?.phone) {
+    const { data: phoneOwner, error: phoneOwnerError } = await db
+      .from("users")
+      .select("id")
+      .eq("phone", phone)
+      .maybeSingle();
+    if (phoneOwnerError) {
+      return NextResponse.json({ error: phoneOwnerError.message }, { status: 500, headers: NO_STORE });
+    }
+    if (!phoneOwner || phoneOwner.id === lookup.patient.id) {
+      profilePatch.phone = phone;
+    }
+  }
   const { error: profileUpdateError } = await db
     .from("users")
-    .update({ onboarding_profile: { ...profile, call_phone: phone } })
+    .update(profilePatch)
     .eq("id", lookup.patient.id);
   if (profileUpdateError) {
     return NextResponse.json({ error: profileUpdateError.message }, { status: 500, headers: NO_STORE });

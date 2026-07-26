@@ -144,17 +144,31 @@ export async function POST(req: NextRequest) {
 
   const { data: existingUser, error: existingUserError } = await db
     .from("users")
-    .select("onboarding_profile")
+    .select("phone, onboarding_profile")
     .eq("id", lookup.patient.id)
     .maybeSingle();
   if (existingUserError) {
     return NextResponse.json({ error: existingUserError.message }, { status: 500, headers: NO_STORE });
   }
 
+  const nextProfile = cleanProfile(body.onboarding_profile);
   patch.onboarding_profile = {
     ...profileObject(existingUser?.onboarding_profile),
-    ...cleanProfile(body.onboarding_profile),
+    ...nextProfile,
   };
+  if (!existingUser?.phone && nextProfile.call_phone) {
+    const { data: phoneOwner, error: phoneOwnerError } = await db
+      .from("users")
+      .select("id")
+      .eq("phone", nextProfile.call_phone)
+      .maybeSingle();
+    if (phoneOwnerError) {
+      return NextResponse.json({ error: phoneOwnerError.message }, { status: 500, headers: NO_STORE });
+    }
+    if (!phoneOwner || phoneOwner.id === lookup.patient.id) {
+      patch.phone = nextProfile.call_phone;
+    }
+  }
   patch.onboarded_at = new Date().toISOString();
 
   if (Object.keys(patch).length > 0) {

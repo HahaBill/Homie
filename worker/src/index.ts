@@ -568,6 +568,126 @@ type VapiMessage = {
   [key: string]: unknown;
 };
 
+type VapiListedCall = {
+  id?: string;
+  type?: string;
+  status?: string;
+  createdAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  endedReason?: string;
+  durationSeconds?: number;
+  cost?: number;
+  costs?: Array<{ cost?: number }>;
+  customer?: { number?: string };
+  artifact?: {
+    transcript?: string;
+    recordingUrl?: string;
+    recording?: { mono?: { combinedUrl?: string }; stereoUrl?: string };
+  };
+  analysis?: { summary?: string };
+  [key: string]: unknown;
+};
+
+app.post("/sync-vapi-calls", async (c) => {
+  if (!c.env.WORKER_ADMIN_TOKEN) {
+    return c.json({ error: "WORKER_ADMIN_TOKEN not configured — route disabled" }, 501);
+  }
+  const auth = c.req.header("Authorization");
+  if (auth !== `Bearer ${c.env.WORKER_ADMIN_TOKEN}`) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+  if (!c.env.VAPI_API_KEY) {
+    return c.json({ error: "VAPI_API_KEY not configured — route disabled" }, 501);
+  }
+
+  const body = await c.req.json<{ user_id?: string; phones?: string[] }>().catch(() => ({}) as any);
+  const phones = Array.from(
+    new Set(
+      (body.phones ?? [])
+        .map((phone: string) => {
+          try {
+            return normalizePhone(phone);
+          } catch {
+            return null;
+          }
+        })
+        .filter((phone: string | null): phone is string => Boolean(phone)),
+    ),
+  );
+  if (phones.length === 0) {
+    return c.json({ error: "phones are required" }, 400);
+  }
+
+  const url = new URL("https://api.vapi.ai/call");
+  url.searchParams.set("limit", "100");
+  if (c.env.VAPI_ASSISTANT_ID) url.searchParams.set("assistantId", c.env.VAPI_ASSISTANT_ID);
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${c.env.VAPI_API_KEY}` },
+  }).catch(() => null);
+  if (!res?.ok) {
+    const detail = res ? await res.text().catch(() => "") : "Vapi request failed";
+    return c.json({ error: detail || "Vapi sync failed" }, 502);
+  }
+
+  const calls = (await res.json().catch(() => [])) as VapiListedCall[];
+  const target = new Set(phones);
+  const user = body.user_id ? await getUserById(c.env, body.user_id) : null;
+  let stored = 0;
+  let matched = 0;
+
+  for (const call of Array.isArray(calls) ? calls : []) {
+    if (!call.id) continue;
+    const rawNumber = call.customer?.number ?? null;
+    let phone: string | null = null;
+    if (rawNumber) {
+      try {
+        phone = normalizePhone(rawNumber);
+      } catch {
+        phone = rawNumber;
+      }
+    }
+    if (!phone || !target.has(phone)) continue;
+    matched += 1;
+
+    const linkedUser = user ?? (await findUserByPhone(c.env, phone));
+    const cost =
+      typeof call.cost === "number"
+        ? call.cost
+        : Array.isArray(call.costs)
+          ? call.costs.reduce((sum, item) => sum + (typeof item.cost === "number" ? item.cost : 0), 0)
+          : null;
+
+    await upsertCall(c.env, {
+      vapi_call_id: call.id,
+      user_id: linkedUser?.id ?? null,
+      phone,
+      direction: call.type ?? null,
+      status: call.status ?? null,
+      ended_reason: call.endedReason ?? null,
+      started_at: call.startedAt ?? call.createdAt ?? null,
+      ended_at: call.endedAt ?? null,
+      duration_seconds: typeof call.durationSeconds === "number" ? call.durationSeconds : null,
+      cost,
+      summary: call.analysis?.summary ?? null,
+      transcript: call.artifact?.transcript ?? null,
+      recording_url:
+        call.artifact?.recordingUrl ??
+        call.artifact?.recording?.mono?.combinedUrl ??
+        call.artifact?.recording?.stereoUrl ??
+        null,
+      payload: call,
+    });
+    stored += 1;
+  }
+
+  if (user) {
+    await insertAuditLog(c.env, user.id, "vapi_calls_synced", { phones: phones.length, matched, stored });
+  }
+  return c.json({ ok: true, matched, stored });
+});
+
 app.post("/webhooks/vapi", async (c) => {
   if (!c.env.VAPI_WEBHOOK_SECRET) {
     return c.json({ error: "VAPI_WEBHOOK_SECRET not configured — route disabled" }, 501);

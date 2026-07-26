@@ -14,6 +14,10 @@ export interface Env {
 
   /** Shared secret Vapi sends on its webhook. Route refuses if unset. */
   VAPI_WEBHOOK_SECRET?: string;
+  /** Private Vapi API key for server-side call sync. */
+  VAPI_API_KEY?: string;
+  /** Optional assistant filter for Vapi call sync. */
+  VAPI_ASSISTANT_ID?: string;
 
   /** Required bearer token for POST /send-test. Route refuses if unset. */
   WORKER_ADMIN_TOKEN?: string;

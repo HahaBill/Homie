@@ -47,7 +47,7 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl="/dashboard"
+            fallbackRedirectUrl="/onboarding"
           />
           <p className="auth-note" style={{ textAlign: "center", marginTop: 32 }}>
             You do not need an account to use Homie. The thread works on its

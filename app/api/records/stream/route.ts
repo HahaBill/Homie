@@ -1,6 +1,7 @@
 import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords, type TimelineItem } from "@/lib/server/records";
 import { fetchPressure } from "@/lib/server/openmeteo";
+import { syncVapiCallsForUser } from "@/lib/server/vapi-sync";
 
 /**
  * Server-Sent Events for the unified record.
@@ -72,6 +73,7 @@ export async function GET() {
       // First frame is the whole record, so a subscriber never needs a
       // separate fetch to render.
       try {
+        await syncVapiCallsForUser(patientId);
         const initial = await getUnifiedRecords(patientId, delta);
         initial.timeline.forEach((item) => seen.add(keyOf(item)));
         send("snapshot", initial);

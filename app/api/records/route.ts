@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords } from "@/lib/server/records";
 import { fetchPressure } from "@/lib/server/openmeteo";
+import { syncVapiCallsForUser } from "@/lib/server/vapi-sync";
 
 /**
  * The unified record for the signed-in patient: thread messages and Vapi call
@@ -27,6 +28,7 @@ export async function GET() {
   // Weather first: the flare figure is computed from today's pressure change
   // against this person's own history, so the record needs it.
   const weather = await fetchPressure();
+  await syncVapiCallsForUser(lookup.patient.id);
   const records = await getUnifiedRecords(
     lookup.patient.id,
     weather?.pressureDelta24h ?? null,
