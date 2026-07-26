@@ -24,6 +24,15 @@ export const metadata: Metadata = {
  * Redirect after success is Clerk's own, so the page opens by itself:
  * fallbackRedirectUrl is where that lands when there is no deep link to
  * honour, and a redirect_url on the query string still wins.
+ *
+ * OAuth (Google, Apple) blurs sign-in and sign-up: clicking "Continue with
+ * Google" here for an address Clerk has never seen creates the account on
+ * the spot, and Clerk treats that as a *sign-up* outcome even though it
+ * happened on this component — landing page's only CTA points here, not
+ * /sign-up. fallbackRedirectUrl alone only covers the existing-user branch
+ * (it's wired to signInFallbackRedirectUrl internally), so a first-time
+ * Google/Apple user fell through to Clerk's own default instead of
+ * /onboarding. signUpFallbackRedirectUrl covers the other branch.
  */
 export default function SignInPage() {
   return (
@@ -48,6 +57,7 @@ export default function SignInPage() {
             path="/sign-in"
             signUpUrl="/sign-up"
             fallbackRedirectUrl="/onboarding"
+            signUpFallbackRedirectUrl="/onboarding"
           />
           <p className="auth-note" style={{ textAlign: "center", marginTop: 32 }}>
             You do not need an account to use Homie. The thread works on its

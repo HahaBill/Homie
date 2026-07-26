@@ -19,6 +19,11 @@ export const metadata: Metadata = {
  *
  * New accounts land on /onboarding, where consent is actually captured
  * (PRD §7.4); returning ones go straight to the thread.
+ *
+ * signInFallbackRedirectUrl mirrors the fix on /sign-in: OAuth here can
+ * just as easily resolve to an existing account (Google/Apple email
+ * already on file), which Clerk treats as the sign-in branch and would
+ * otherwise skip fallbackRedirectUrl entirely.
  */
 export default function SignUpPage() {
   return (
@@ -43,6 +48,7 @@ export default function SignUpPage() {
             path="/sign-up"
             signInUrl="/sign-in"
             fallbackRedirectUrl="/onboarding"
+            signInFallbackRedirectUrl="/onboarding"
           />
           <p className="auth-note" style={{ textAlign: "center", marginTop: 32 }}>
             You do not need an account to use Homie. The thread works on its
