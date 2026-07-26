@@ -15,6 +15,19 @@ const RED_FLAG_PATTERNS = [
   "cannot breathe",
   "difficulty breathing",
   "trouble breathing",
+  // "difficulty/trouble breathing" only caught the clinical phrasing — a real
+  // call transcript said "hard time breathing" and slipped past both. Airway
+  // symptoms (breathing AND swallowing) are exactly what this gate exists
+  // for, so covering the colloquial phrasing here matters as much as the
+  // textbook one.
+  "hard time breathing",
+  "having trouble breathing",
+  "can't swallow",
+  "cant swallow",
+  "cannot swallow",
+  "difficulty swallowing",
+  "trouble swallowing",
+  "hard time swallowing",
   "face drooping",
   "arm weakness",
   "slurred speech",
