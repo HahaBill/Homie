@@ -63,7 +63,27 @@ Homie on a phone — the warm cream icon in iOS **Recently Added**. Not another 
 | Sign in → live thread | [/dashboard](https://meet-homie.vercel.app/dashboard) |
 | Unified record | [/profile](https://meet-homie.vercel.app/profile) |
 | Worker health | https://homie-worker.bill-nguyentonhoang.workers.dev/health |
-| Signed report (tokenised) | `https://homie-worker…/r/:token` — minted from the thread |
+| Health report | `https://homie-worker…/r/:token` — ask in iMessage, Homie texts the link |
+
+---
+
+## The health report
+
+<p align="center">
+  <img src="docs/images/health-report.png" alt="Homie health report on a phone — check-ins, texts, calls, and the conversation trail" width="320" />
+</p>
+
+This is the clinician handoff. Implemented in [`worker/src/report.ts`](worker/src/report.ts) and served by the Worker at **`GET /r/:token`**.
+
+How you get it: ask in iMessage (e.g. “Can I get my health report”). The reply agent sets `wants_report`, Homie mints an HMAC-signed link, and texts it back. The token carries `user_id` + expiry; the Worker verifies the signature, re-checks the user is still active, then renders HTML.
+
+What it is:
+
+- A **document**, not a logged-in app. No client JavaScript. Charts are server-rendered inline SVG so it prints cleanly.
+- Sections for pain over time, medication adherence, and the check-in trail (texts and calls). Empty states wait for enough data (“fills in as the texting carries on”).
+- Special-category health data: response is `Cache-Control: private, no-store`. A leaked link is a leaked record; short TTL, and `STOP` / status changes invalidate use.
+
+This is separate from the signed-in **/profile** live record (Clerk session, WHOOP, weather dials). The health report is the shareable page you open from the text and can hand to a GP.
 
 ---
 
@@ -74,7 +94,7 @@ Homie on a phone — the warm cream icon in iOS **Recently Added**. Not another 
 - Runs a **deterministic safety layer** first: red-flag language → NHS 999/111 guidance; exact `STOP` / `DELETE` / `MY DATA`.
 - Structures every reply into observations (pain, areas, meds) without guessing certainty.
 - Holds **one continuous record** — texts, web chat, and voice-call transcripts (Vapi + ElevenLabs) on a single timeline.
-- Hands you a **signed, printable report** with pressure and symptom lines as inline SVG — built to give a rheumatologist, not a dashboard to chase.
+- Texts a **signed health report** link when asked in iMessage — printable HTML from `worker/src/report.ts`, built to hand to a clinician.
 - Never advises, diagnoses, or changes a dose. When something looks wrong, it says so plainly and points at a person.
 
 ---
@@ -240,7 +260,7 @@ docs/
   PRD.md                 Scope, persona, safety gates, non-goals
   ARCHITECTURE.md        Runtime split, caching, link security
   MULTIMORBIDITY.md      Evidence + pitch sources
-  images/                Screenshots + architecture.png
+  images/                Screenshots, health-report.png, architecture.png
 ```
 
 *(Architecture diagram also references `skin-agent/` and `glasses/` — those directories are not present on this branch.)*
