@@ -38,6 +38,20 @@ export type Correlation = {
   statement: string | null;
 };
 
+export type WhoopSleepDay = {
+  date: string;
+  start: string;
+  end: string;
+  scoreState: "SCORED";
+  sleepPerformancePercentage: number;
+  sleepConsistencyPercentage: number;
+  sleepEfficiencyPercentage: number;
+  respiratoryRate: number;
+  totalInBedHours: number;
+  totalSleepHours: number;
+  disturbanceCount: number;
+};
+
 export type UnifiedRecords = {
   timeline: TimelineItem[];
   callCount: number;
@@ -45,6 +59,18 @@ export type UnifiedRecords = {
   correlation: Correlation;
   /** Null when today's pressure was not supplied by the caller. */
   flareRisk: FlareRisk | null;
+  whoopSleep: {
+    source: "mock";
+    windowDays: 7;
+    days: WhoopSleepDay[];
+    averages: {
+      sleepPerformancePercentage: number;
+      sleepConsistencyPercentage: number;
+      sleepEfficiencyPercentage: number;
+      respiratoryRate: number;
+      totalSleepHours: number;
+    };
+  };
 };
 
 /** A pressure fall this size is the one the product is built around. */
@@ -133,6 +159,7 @@ export async function getUnifiedRecords(
     callCount: calls.data?.length ?? 0,
     messageCount: timeline.filter((t) => t.kind === "message").length,
     correlation,
+    whoopSleep: mockWhoopSleep(),
     flareRisk:
       pressureDelta24h === null && correlation.pressureDrops === 0
         ? null
@@ -142,6 +169,62 @@ export async function getUnifiedRecords(
             worseAfterDrop: correlation.worseAfterDrop,
             recentPain,
           }),
+  };
+}
+
+function mockWhoopSleep(): UnifiedRecords["whoopSleep"] {
+  const now = new Date();
+  const template = [
+    { performance: 82, consistency: 75, efficiency: 89, respiratory: 16.3, inBed: 8.1, asleep: 7.2, disturbances: 14 },
+    { performance: 76, consistency: 72, efficiency: 86, respiratory: 16.8, inBed: 7.7, asleep: 6.6, disturbances: 18 },
+    { performance: 91, consistency: 81, efficiency: 92, respiratory: 15.9, inBed: 8.4, asleep: 7.7, disturbances: 10 },
+    { performance: 68, consistency: 63, efficiency: 84, respiratory: 17.1, inBed: 7.3, asleep: 6.1, disturbances: 22 },
+    { performance: 87, consistency: 79, efficiency: 90, respiratory: 16.2, inBed: 8.0, asleep: 7.2, disturbances: 12 },
+    { performance: 73, consistency: 70, efficiency: 85, respiratory: 16.6, inBed: 7.5, asleep: 6.4, disturbances: 19 },
+    { performance: 84, consistency: 77, efficiency: 91, respiratory: 16.1, inBed: 8.2, asleep: 7.5, disturbances: 11 },
+  ];
+  const days = template.map((day, index) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - (6 - index));
+    d.setHours(0, 0, 0, 0);
+    const start = new Date(d);
+    start.setDate(d.getDate() - 1);
+    start.setHours(23, 10 + (index % 3) * 12, 0, 0);
+    const end = new Date(start.getTime() + day.inBed * 60 * 60 * 1000);
+    return {
+      date: d.toISOString().slice(0, 10),
+      start: start.toISOString(),
+      end: end.toISOString(),
+      scoreState: "SCORED" as const,
+      sleepPerformancePercentage: day.performance,
+      sleepConsistencyPercentage: day.consistency,
+      sleepEfficiencyPercentage: day.efficiency,
+      respiratoryRate: day.respiratory,
+      totalInBedHours: day.inBed,
+      totalSleepHours: day.asleep,
+      disturbanceCount: day.disturbances,
+    };
+  });
+  const avg = (field: keyof Pick<
+    WhoopSleepDay,
+    | "sleepPerformancePercentage"
+    | "sleepConsistencyPercentage"
+    | "sleepEfficiencyPercentage"
+    | "respiratoryRate"
+    | "totalSleepHours"
+  >) => Number((days.reduce((sum, day) => sum + day[field], 0) / days.length).toFixed(1));
+
+  return {
+    source: "mock",
+    windowDays: 7,
+    days,
+    averages: {
+      sleepPerformancePercentage: avg("sleepPerformancePercentage"),
+      sleepConsistencyPercentage: avg("sleepConsistencyPercentage"),
+      sleepEfficiencyPercentage: avg("sleepEfficiencyPercentage"),
+      respiratoryRate: avg("respiratoryRate"),
+      totalSleepHours: avg("totalSleepHours"),
+    },
   };
 }
 

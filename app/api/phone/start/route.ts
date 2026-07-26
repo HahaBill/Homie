@@ -113,11 +113,17 @@ export async function POST(req: NextRequest) {
     const detail = res
       ? ((await res.json().catch(() => ({}))) as { error?: string }).error
       : null;
+    const pendingSendblueVerification =
+      detail?.toLowerCase().includes("pending verification request") ?? false;
     // Drop the challenge rather than leave one nobody can answer.
     await db.from("phone_verifications").delete().eq("user_id", lookup.patient.id);
     return NextResponse.json(
-      { error: detail ?? "could not send the code — check the number and try again" },
-      { status: 502, headers: NO_STORE },
+      {
+        error: pendingSendblueVerification
+          ? "Send “Hi Homie” to +1 872 296 4991 first, then come back and tap this again. Sendblue has this number in pending verification until you message Homie once."
+          : detail ?? "could not send the code — check the number and try again",
+      },
+      { status: pendingSendblueVerification ? 409 : 502, headers: NO_STORE },
     );
   }
 

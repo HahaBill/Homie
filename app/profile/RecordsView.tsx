@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, PhoneCall } from "lucide-react";
+import { Activity, Bed, MessageCircle, Moon, PhoneCall } from "lucide-react";
 import WeatherPanel, { FlareArc } from "./WeatherPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,31 @@ type Profile = {
   phoneLinked: boolean;
 };
 
+type WhoopSleep = {
+  source: "mock";
+  windowDays: 7;
+  days: Array<{
+    date: string;
+    start: string;
+    end: string;
+    scoreState: "SCORED";
+    sleepPerformancePercentage: number;
+    sleepConsistencyPercentage: number;
+    sleepEfficiencyPercentage: number;
+    respiratoryRate: number;
+    totalInBedHours: number;
+    totalSleepHours: number;
+    disturbanceCount: number;
+  }>;
+  averages: {
+    sleepPerformancePercentage: number;
+    sleepConsistencyPercentage: number;
+    sleepEfficiencyPercentage: number;
+    respiratoryRate: number;
+    totalSleepHours: number;
+  };
+};
+
 function dayLabel(at: string): string {
   const d = new Date(at);
   if (Number.isNaN(d.getTime())) return "";
@@ -88,12 +113,19 @@ function excerpt(text: string, max = 180): string {
   return compact.length > max ? `${compact.slice(0, max - 1)}…` : compact;
 }
 
+function shortDay(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", { weekday: "short" });
+}
+
 export default function RecordsView() {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [correlation, setCorrelation] = useState<Correlation | null>(null);
   const [flare, setFlare] = useState<FlareRisk | null>(null);
   const [weather, setWeather] = useState<Weather>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [whoopSleep, setWhoopSleep] = useState<WhoopSleep | null>(null);
   const [state, setState] = useState<"loading" | "live" | "error">("loading");
   const [openCall, setOpenCall] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
@@ -103,10 +135,11 @@ export default function RecordsView() {
     let cancelled = false;
     fetch("/api/records")
       .then((r) => r.json())
-      .then((d: { weather?: Weather; profile?: Profile }) => {
+      .then((d: { weather?: Weather; profile?: Profile; whoopSleep?: WhoopSleep }) => {
         if (cancelled) return;
         setWeather(d.weather ?? null);
         setProfile(d.profile ?? null);
+        setWhoopSleep(d.whoopSleep ?? null);
       })
       .catch(() => {});
     return () => {
@@ -123,10 +156,12 @@ export default function RecordsView() {
         timeline: TimelineItem[];
         correlation: Correlation;
         flareRisk: FlareRisk | null;
+        whoopSleep?: WhoopSleep;
       };
       setItems(d.timeline);
       setCorrelation(d.correlation);
       setFlare(d.flareRisk ?? null);
+      if (d.whoopSleep) setWhoopSleep(d.whoopSleep);
       setState("live");
     });
     es.addEventListener("flare", (e) => {
@@ -273,6 +308,49 @@ export default function RecordsView() {
         ) : null}
 
         <WeatherPanel weather={weather} />
+
+        {whoopSleep ? (
+          <div className="side-card whoop-card">
+            <div className="whoop-card-head">
+              <span className="mono">MOCK WHOOP · 7 DAYS</span>
+              <Badge variant="outline">Sleep</Badge>
+            </div>
+            <div className="whoop-hero">
+              <div>
+                <Moon size={22} />
+                <strong>{whoopSleep.averages.sleepPerformancePercentage}%</strong>
+                <span>sleep performance</span>
+              </div>
+              <div>
+                <Bed size={22} />
+                <strong>{whoopSleep.averages.totalSleepHours}h</strong>
+                <span>average sleep</span>
+              </div>
+            </div>
+            <div className="whoop-metrics">
+              <span>
+                <Activity size={16} />
+                {whoopSleep.averages.respiratoryRate}/min respiratory
+              </span>
+              <span>{whoopSleep.averages.sleepConsistencyPercentage}% consistency</span>
+              <span>{whoopSleep.averages.sleepEfficiencyPercentage}% efficiency</span>
+            </div>
+            <div className="whoop-days" aria-label="Mock WHOOP sleep performance over the last 7 days">
+              {whoopSleep.days.map((day) => (
+                <div key={day.date} className="whoop-day">
+                  <i style={{ height: `${Math.max(22, day.sleepPerformancePercentage)}%` }} />
+                  <span>{shortDay(day.date)}</span>
+                  <b>{day.sleepPerformancePercentage}</b>
+                </div>
+              ))}
+            </div>
+            <p className="whoop-note">
+              Mock data shaped from WHOOP sleep fields: score state, stage
+              summary, respiratory rate, performance, consistency and
+              efficiency.
+            </p>
+          </div>
+        ) : null}
 
         <div className="side-card">
           <span className="mono">WHAT HOMIE HAS NOTICED</span>

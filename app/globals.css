@@ -581,6 +581,100 @@ img {
 .side-card .dim {
   color: var(--faint);
 }
+.whoop-card {
+  background: color-mix(in srgb, var(--milk) 78%, white);
+  border: 1px solid var(--edge);
+}
+.whoop-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.whoop-card-head .mono {
+  margin-bottom: 0;
+}
+.whoop-hero {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.whoop-hero > div {
+  min-width: 0;
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+  background: var(--oat);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--clay);
+}
+.whoop-hero strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--ink);
+}
+.whoop-hero span,
+.whoop-note {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--label);
+}
+.whoop-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0 16px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.whoop-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.whoop-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+  min-height: 118px;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--oat);
+  border: 1px solid var(--edge);
+}
+.whoop-day {
+  min-width: 0;
+  height: 92px;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  justify-items: center;
+  gap: 4px;
+  color: var(--label);
+  font-size: 12px;
+}
+.whoop-day i {
+  width: 100%;
+  max-width: 18px;
+  align-self: end;
+  border-radius: 999px;
+  background: var(--apricot);
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--apricot) 24%, transparent);
+}
+.whoop-day b {
+  font-family: var(--font-display);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1;
+}
+.whoop-note {
+  margin: 14px 0 0;
+}
 
 /* Today screen */
 .today-wrap {
