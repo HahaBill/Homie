@@ -27,6 +27,10 @@ function dayLabel(at: string | null): string | null {
     .toUpperCase();
 }
 
+function bubbleClass(who: ThreadMessage["who"]): string {
+  return who === "homie" ? "bubble homie" : "bubble her";
+}
+
 export default function ThreadChat() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
@@ -74,8 +78,15 @@ export default function ThreadChat() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const d = (await res.json()) as { reply?: string; error?: string };
-      if (!res.ok || !d.reply) {
+      const d = (await res.json()) as {
+        reply?: string;
+        error?: string;
+        duplicate?: boolean;
+      };
+      if (d.duplicate) {
+        // The server suppressed a repeat of a message it already answered.
+        // Nothing failed, so say nothing — her own bubble stays where it is.
+      } else if (!res.ok || !d.reply) {
         setNotice(d.error ?? "Homie could not answer just now.");
       } else {
         setMessages((m) => [
@@ -124,7 +135,7 @@ export default function ThreadChat() {
         return (
           <div key={i} style={{ display: "contents" }}>
             {stamp ? <div className="day-stamp">{stamp}</div> : null}
-            <div className={`bubble ${m.who}`}>{m.text}</div>
+            <div className={bubbleClass(m.who)}>{m.text}</div>
           </div>
         );
       })}

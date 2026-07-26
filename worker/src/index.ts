@@ -413,6 +413,19 @@ app.post("/chat", async (c) => {
     if (user.status !== "active") {
       return c.json({ reply: "Homie is paused for this number. Text START from your phone to pick it back up." });
     }
+
+    // The same replay guard the Sendblue path has had all along. This route
+    // did not, and it shows in the data: two identical ad-hoc check-ins seven
+    // seconds apart, same reply stored twice, the model billed twice. The
+    // composer disables itself while a send is in flight, but a client-side
+    // guard cannot survive a retry, a second tab, or a refresh mid-request —
+    // only the database can. Same bucket as the SMS fallback key: one
+    // sender, one text, one UTC minute.
+    const chatDedupeKey = `web:${user.id}:${text}:${utcMinute()}`;
+    if (!(await claimWebhookEvent(c.env, chatDedupeKey))) {
+      log({ event: "web_chat_duplicate", user_id: user.id });
+      return c.json({ reply: null, duplicate: true }, 200);
+    }
     const auditInbound = insertAuditLog(c.env, user.id, "inbound_received", {
       ...auditText(c.env, text),
       channel: "web",
@@ -428,6 +441,9 @@ app.post("/chat", async (c) => {
     await Promise.all([insertObservation(c.env, checkin.id, parsed), auditInbound]);
     await insertAuditLog(c.env, user.id, "reply_sent", { checkin_id: checkin.id, channel: "web" });
     log({ event: "web_chat_reply", user_id: user.id, checkin_id: checkin.id });
+    // Close the claim only now: a request that died mid-flight leaves the
+    // lease open so the retry can take it over rather than being swallowed.
+    await completeWebhookEvent(c.env, chatDedupeKey);
 
     const withGreeting = parsed.is_introduction || isFirstContact(user);
     const reportUrl = await maybeReportUrl(c.env, new URL(c.req.url).origin, user.id, parsed.wants_report);

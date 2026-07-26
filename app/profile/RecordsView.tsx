@@ -72,6 +72,10 @@ function mmss(seconds: number | null): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function bubbleClass(who: Extract<TimelineItem, { kind: "message" }>["who"]): string {
+  return who === "homie" ? "bubble homie" : "bubble her";
+}
+
 export default function RecordsView() {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [correlation, setCorrelation] = useState<Correlation | null>(null);
@@ -161,7 +165,7 @@ export default function RecordsView() {
                 {stamp ? <div className="day-stamp">{stamp}</div> : null}
 
                 {item.kind === "message" ? (
-                  <div className={`bubble ${item.who}`}>{item.text}</div>
+                  <div className={bubbleClass(item.who)}>{item.text}</div>
                 ) : (
                   <div className="call-entry">
                     <div className="call-entry-head">

@@ -110,9 +110,20 @@ export async function POST(req: NextRequest) {
       { status: 502, headers: NO_STORE },
     );
   }
-  const payload = (await res.json()) as { reply?: string; red_flag?: boolean };
+  const payload = (await res.json()) as {
+    reply?: string;
+    red_flag?: boolean;
+    duplicate?: boolean;
+  };
+  // A suppressed duplicate is not a failure — the first request already
+  // answered. Passed through so the composer can stay quiet instead of
+  // reporting an error for a message that was delivered.
   return NextResponse.json(
-    { reply: payload.reply ?? "", red_flag: payload.red_flag ?? false },
+    {
+      reply: payload.reply ?? "",
+      red_flag: payload.red_flag ?? false,
+      duplicate: payload.duplicate ?? false,
+    },
     { headers: NO_STORE },
   );
 }
