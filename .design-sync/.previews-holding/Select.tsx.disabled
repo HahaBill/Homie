@@ -1,0 +1,27 @@
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
+
+export function Default() {
+  return (
+    <Select defaultOpen defaultValue="lupus">
+      <SelectTrigger className="w-64">
+        <SelectValue placeholder="choose a condition" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>your conditions</SelectLabel>
+          <SelectItem value="lupus">lupus</SelectItem>
+          <SelectItem value="ra">rheumatoid arthritis</SelectItem>
+          <SelectItem value="other">something else</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
