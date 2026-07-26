@@ -1,0 +1,10 @@
+{
+  "projectId": "d84c50a9-026c-4e71-a72f-23d4cbdd64c0",
+  "shape": "package",
+  "pkg": "homie-landing",
+  "globalName": "HomieDS",
+  "srcDir": "components",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".design-sync/.cache/ds-styles.css",
+  "buildCmd": "npm run build; node .design-sync/prepare-css.mjs"
+}

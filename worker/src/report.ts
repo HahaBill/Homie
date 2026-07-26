@@ -59,6 +59,32 @@ function localDateKey(iso: string, timezone: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, dateStyle: "short" }).format(new Date(iso));
 }
 
+function fmtDayStamp(iso: string, timezone: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  })
+    .format(new Date(iso))
+    .toUpperCase();
+}
+
+function fmtTime(iso: string, timezone: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "2-digit", minute: "2-digit" }).format(
+    new Date(iso)
+  );
+}
+
+// Same glyphs as the app's lucide icons (MessageCircle, PhoneCall) so the
+// handed-off page and the live record read as one design, not two.
+function iconMsg(color: string): string {
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>`;
+}
+function iconCall(color: string): string {
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+}
+
 // ---------------------------------------------------------------------------
 // Chart: pain (1–5) over time, barometric pressure delta overlaid when known
 // ---------------------------------------------------------------------------
@@ -181,8 +207,12 @@ function medsStrip(data: ReportData, timezone: string): string {
     mentioned.length > 0
       ? `<p class="meds-note">Taken on ${taken.length} of the ${mentioned.length} day${mentioned.length === 1 ? "" : "s"} it came up. Blank days are days it wasn't mentioned — not missed doses.</p>`
       : `<p class="meds-note">Medication hasn't come up in the messages yet.</p>`;
+  const badge =
+    mentioned.length > 0
+      ? `<div class="card-head"><span class="badge badge-taken">${taken.length}/${mentioned.length} taken</span></div>`
+      : "";
 
-  return `<div class="meds-row">${dots}</div>${summary}`;
+  return `<div class="card">${badge}<div class="meds-row">${dots}</div>${summary}</div>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +232,21 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
     data.checkins.length > 0 && firstCheckin
       ? `${data.checkins.length} check-in${data.checkins.length === 1 ? "" : "s"} since ${fmtDay(firstCheckin.at, tz)}`
       : "The first check-ins will appear here as they happen";
+
+  // A glanceable stat row up top — the same "count at a door" pattern as the
+  // live record's SURFACES card, so a clinician skimming this page gets the
+  // shape of it before reading a word.
+  const callCount = data.checkins.filter((c) => c.channel === "call").length;
+  const textCount = data.checkins.length - callCount;
+  const statPills =
+    data.checkins.length > 0
+      ? `<div class="stat-row">` +
+        `<span class="stat-pill">${data.checkins.length} check-in${data.checkins.length === 1 ? "" : "s"}</span>` +
+        (textCount > 0 ? `<span class="stat-pill">${textCount} text${textCount === 1 ? "" : "s"}</span>` : "") +
+        (callCount > 0 ? `<span class="stat-pill">${callCount} call${callCount === 1 ? "" : "s"}</span>` : "") +
+        (firstCheckin ? `<span class="stat-pill stat-pill-quiet">since ${fmtDay(firstCheckin.at, tz)}</span>` : "") +
+        `</div>`
+      : "";
 
   // Plain observed facts only — no scores, no trends language, no advice.
   const recentPain = data.observations.filter((o) => o.pain_level !== null).slice(-7);
@@ -226,11 +271,12 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
       if (key) areaCounts.set(key, (areaCounts.get(key) ?? 0) + 1);
     }
   }
-  const chips = [...areaCounts.entries()]
+  const chipList = [...areaCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([area, n]) => `<span class="chip">${escapeHtml(area)}<i>${n}</i></span>`)
     .join("");
+  const chips = chipList ? `<div class="card"><div class="chips">${chipList}</div></div>` : "";
 
   const quotes = data.observations
     .filter((o) => o.note && o.note.trim())
@@ -238,7 +284,7 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
     .reverse()
     .map(
       (o) =>
-        `<div class="quote"><p>“${escapeHtml(o.note as string)}”</p><span class="qdate">${fmtDay(o.at, tz)}</span></div>`
+        `<div class="quote"><div class="quote-mark">${iconMsg(T.clay)}</div><div><p>“${escapeHtml(o.note as string)}”</p><span class="qdate">${fmtDay(o.at, tz)}</span></div></div>`
     )
     .join("");
 
@@ -249,35 +295,48 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   // reads this same table). Text entries render inline since they're
   // already short; call entries show the recap with a native <details>
   // toggle for the full transcript — no client JS, still prints fine.
+  // Grouped under day-stamp dividers, same as the live record's timeline,
+  // so a page of twenty entries reads as a handful of days, not a wall.
+  let lastDayKey = "";
   const checkinEntries = data.checkins
     .filter((c) => c.message_text || c.reply_text)
     .slice(-20)
     .reverse()
     .map((c) => {
+      const dayKey = localDateKey(c.at, tz);
+      const stamp = dayKey !== lastDayKey ? `<div class="day-stamp">${fmtDayStamp(c.at, tz)}</div>` : "";
+      lastDayKey = dayKey;
+      const time = fmtTime(c.at, tz);
+
       if (c.channel === "call") {
         const mins = c.call?.duration_seconds != null ? Math.round(c.call.duration_seconds / 60) : null;
-        const tag = mins !== null ? `CALL &middot; ${mins} MIN${mins === 1 ? "" : "S"}` : "CALL";
+        const durationText = mins !== null ? ` &middot; ${mins} min${mins === 1 ? "" : "s"}` : "";
         const transcriptDetail = c.call?.transcript
           ? `<details class="call-transcript"><summary>See the whole call</summary><p>${escapeHtml(c.call.transcript)}</p></details>`
           : "";
         return (
-          `<div class="quote checkin">` +
-          `<span class="call-tag">${tag}</span>` +
-          `<p>${escapeHtml(c.reply_text ?? "")}</p>` +
-          `<span class="qdate">${fmtDay(c.at, tz)}</span>` +
+          stamp +
+          `<div class="entry">` +
+          `<div class="entry-icon entry-icon-call">${iconCall(T.clayDeep)}</div>` +
+          `<div class="entry-body">` +
+          `<div class="entry-head"><span class="entry-time">${time}${durationText}</span><span class="badge badge-call">Call</span></div>` +
+          `<p class="entry-copy">${escapeHtml(c.reply_text ?? "")}</p>` +
           transcriptDetail +
-          `</div>`
+          `</div></div>`
         );
       }
-      const prompt = c.message_text ? `<p class="prompt">${escapeHtml(c.message_text)}</p>` : "";
-      const reply = c.reply_text ? `<p class="reply">${escapeHtml(c.reply_text)}</p>` : "";
+
+      const prompt = c.message_text ? `<p class="entry-copy prompt">${escapeHtml(c.message_text)}</p>` : "";
+      const reply = c.reply_text ? `<p class="entry-copy reply">${escapeHtml(c.reply_text)}</p>` : "";
       return (
-        `<div class="quote checkin">` +
-        `<span class="call-tag">TEXT</span>` +
+        stamp +
+        `<div class="entry">` +
+        `<div class="entry-icon entry-icon-text">${iconMsg(T.clay)}</div>` +
+        `<div class="entry-body">` +
+        `<div class="entry-head"><span class="entry-time">${time}</span><span class="badge badge-text">Text</span></div>` +
         prompt +
         reply +
-        `<span class="qdate">${fmtDay(c.at, tz)}</span>` +
-        `</div>`
+        `</div></div>`
       );
     })
     .join("");
@@ -318,13 +377,20 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   .sub { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; color:${T.muted2}; margin:0 0 6px; }
   .lede { font-size:17px; line-height:1.6; color:${T.muted}; margin:10px 0 0; max-width:60ch; }
   section { margin-top:44px; }
+  .stat-row { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0 0; }
+  .stat-pill { display:inline-flex; align-items:center; background:${T.peach}; border-radius:999px;
+               padding:8px 16px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px;
+               letter-spacing:.04em; color:${T.clayDeep}; font-weight:700; }
+  .stat-pill-quiet { background:${T.surface}; border:1px solid ${T.beige}; color:${T.muted2}; font-weight:500; }
   .sec-head { display:flex; align-items:baseline; gap:12px; margin-bottom:16px; }
   .sec-head .num { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px; color:${T.clay}; }
   .sec-head h2 { font-family:'Fredoka',system-ui,sans-serif; font-weight:600; font-size:26px; margin:0; }
   .card { background:${T.surface}; border:1px solid ${T.beige}; border-radius:22px; padding:24px; }
+  .card-head { display:flex; justify-content:flex-end; margin-bottom:14px; }
   .panel-peach { background:${T.peach}; border-radius:26px; padding:32px; }
   .empty { font-size:16px; color:${T.muted}; }
-  svg { display:block; width:100%; height:auto; }
+  svg { display:block; }
+  .card svg { width:100%; height:auto; }
   .legend { display:flex; gap:18px; margin-bottom:12px; font-size:13px; color:${T.muted}; }
   .legend i { display:inline-block; width:18px; height:4px; border-radius:2px; margin-right:7px; vertical-align:middle; }
   .legend i.dash { height:0; border-top:2px dashed; background:none; border-radius:0; }
@@ -338,20 +404,40 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   .chip { background:${T.peach}; border-radius:999px; padding:9px 16px; font-size:14px; font-weight:700; }
   .chip i { font-style:normal; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
             color:${T.clayDeep}; margin-left:8px; }
-  .quote { background:${T.surface}; border:1px solid ${T.beige}; border-radius:22px;
+  .badge { display:inline-flex; align-items:center; font-family:'JetBrains Mono',ui-monospace,monospace;
+           font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+           border-radius:999px; padding:5px 11px; flex:0 0 auto; }
+  .badge-text { background:color-mix(in srgb, ${T.clay} 16%, white); color:${T.clayDeep}; }
+  .badge-call { background:${T.cream}; color:${T.charcoal}; border:1px solid ${T.beige}; }
+  .badge-taken { background:${T.okayBg}; color:${T.okayInk}; }
+  .quote { display:flex; gap:14px; align-items:flex-start; background:${T.surface};
+           border:1px solid ${T.beige}; border-left:3px solid ${T.clay}; border-radius:20px;
            padding:20px 24px; margin-bottom:12px; }
+  .quote-mark { flex:0 0 auto; margin-top:2px; opacity:.55; }
   .quote p { margin:0; font-size:17px; line-height:1.55; }
-  .qdate { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:${T.muted2}; }
-  .call-tag { display:block; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
-              letter-spacing:.12em; color:${T.clay}; margin-bottom:8px; }
-  .checkin .prompt { color:${T.muted}; font-size:15px; line-height:1.5; margin:0 0 8px; }
-  .checkin .reply { font-size:17px; line-height:1.55; margin:0; }
+  .qdate { display:block; margin-top:8px; font-family:'JetBrains Mono',ui-monospace,monospace;
+           font-size:11px; color:${T.muted2}; }
+  .day-stamp { text-align:center; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
+               letter-spacing:.14em; color:${T.muted2}; margin:22px 0 12px; }
+  .day-stamp:first-child { margin-top:0; }
+  .entry { display:grid; grid-template-columns:40px minmax(0,1fr); gap:14px;
+           background:${T.surface}; border:1px solid ${T.beige}; border-radius:20px;
+           padding:18px 20px; margin-bottom:10px; }
+  .entry-icon { width:40px; height:40px; border-radius:13px; display:grid; place-items:center; flex:0 0 auto; }
+  .entry-icon-text { background:color-mix(in srgb, ${T.clay} 14%, white); }
+  .entry-icon-call { background:${T.cream}; }
+  .entry-body { min-width:0; }
+  .entry-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .entry-time { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; color:${T.muted2}; }
+  .entry-copy { margin:0; font-size:16px; line-height:1.55; }
+  .entry-copy.prompt { color:${T.muted}; font-size:14px; margin-bottom:6px; }
+  .entry-copy.reply { font-size:16px; }
   details.call-transcript { margin-top:14px; }
   details.call-transcript summary { cursor:pointer; font-family:'JetBrains Mono',ui-monospace,monospace;
                                      font-size:11px; letter-spacing:.1em; text-transform:uppercase;
                                      color:${T.clayDeep}; }
-  details.call-transcript p { margin-top:10px; font-size:14px; line-height:1.6; color:${T.muted};
-                               white-space:pre-wrap; }
+  details.call-transcript p { margin-top:10px; padding:14px 16px; background:${T.cream}; border-radius:12px;
+                               font-size:14px; line-height:1.6; color:${T.muted}; white-space:pre-wrap; }
   footer { margin-top:56px; border-top:1px solid ${T.beige}; padding-top:20px;
            font-size:13px; line-height:1.7; color:${T.muted2}; }
   @media print {
@@ -371,10 +457,11 @@ export function reportHtml(data: ReportData, expUnixSeconds: number): string {
   <p class="sub">${escapeHtml(introLine)}</p>
   <h1>${name ? `${name}'s page` : "Here's how it's been going"}</h1>
   ${painLine}
+  ${statPills}
 
   ${sec("Pain, day by day", chartBlock)}
   ${sec("The tablets", meds)}
-  ${sec("Where it shows up", chips ? `<div class="chips">${chips}</div>` : "")}
+  ${sec("Where it shows up", chips)}
   ${sec("In your own words", quotes)}
   ${sec("The check-ins", checkinEntries)}
 

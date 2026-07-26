@@ -308,25 +308,38 @@ img {
   padding-top: 6px;
 }
 .btn-pulse {
+  position: relative;
   font-size: 21px;
   padding: 20px 40px;
-  animation: btn-pulse-ring 2.4s ease-in-out infinite;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent);
+  /* Keep the soft drop shadow on the button itself; the ring lives on
+     ::after so it can expand without fighting the button fill color. */
 }
-.btn-pulse:hover,
-.btn-pulse:focus-visible {
+.btn-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--clay) 50%, transparent);
+  animation: btn-pulse-ring 1.8s ease-out infinite;
+}
+.btn-pulse:hover::after,
+.btn-pulse:focus-visible::after {
   animation-play-state: paused;
 }
 @keyframes btn-pulse-ring {
-  0%,
-  100% {
-    box-shadow:
-      0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent),
-      0 0 0 0 color-mix(in srgb, var(--apricot) 45%, transparent);
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--clay) 55%, transparent);
+    opacity: 1;
   }
-  50% {
-    box-shadow:
-      0 8px 18px color-mix(in srgb, var(--clay) 22%, transparent),
-      0 0 0 12px color-mix(in srgb, var(--apricot) 0%, transparent);
+  70% {
+    box-shadow: 0 0 0 18px color-mix(in srgb, var(--clay) 0%, transparent);
+    opacity: 0;
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--clay) 0%, transparent);
+    opacity: 0;
   }
 }
 .hero-visual {

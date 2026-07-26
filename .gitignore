@@ -33,3 +33,10 @@ next-env.d.ts
 # large design-handoff artifacts (kept locally, not tracked)
 Homie design system-handoff.zip
 Homie design system.pdf
+
+# design-sync (claude.ai/design) — staged scripts, build output, machine state
+/.ds-sync/
+/ds-bundle/
+/.design-sync/.cache/
+/.design-sync/learnings/
+/.design-sync/node_modules
