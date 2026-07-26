@@ -2,7 +2,9 @@
 
 # Homie
 
-**Someone who notices — a proactive companion for living with multimorbidity that checks in first, holds one continuous thread across iMessage, voice and the web, and hands the GP one coherent picture.**
+**Someone who notices.**
+
+Homie is a multimorbidity companion that works from a phone number alone. Morning texts, calls when something shifts, and a live web record. Ask in iMessage for your health report and Homie texts back a signed printable link for the clinician. Homie notices and routes. It never advises a dose or diagnoses.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-E8823F?style=for-the-badge&labelColor=2E2622&logo=nextdotjs&logoColor=E8823F)](https://nextjs.org)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-E8823F?style=for-the-badge&labelColor=2E2622&logo=vercel&logoColor=E8823F)](https://vercel.com)
