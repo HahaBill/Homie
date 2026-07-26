@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords } from "@/lib/server/records";
-import { fetchPressure } from "@/lib/server/openmeteo";
+import { fetchPressure, upsertPressureSnapshot } from "@/lib/server/openmeteo";
 import { syncVapiCallsForUser } from "@/lib/server/vapi-sync";
 
 /**
@@ -26,8 +26,19 @@ export async function GET() {
   }
 
   // Weather first: the flare figure is computed from today's pressure change
-  // against this person's own history, so the record needs it.
+  // against this person's own history, so persist the live API reading before
+  // loading that history. Persistence is supporting detail and must not make
+  // the record unavailable when the weather table has a transient failure.
   const weather = await fetchPressure();
+  let weatherStored = false;
+  if (weather) {
+    try {
+      await upsertPressureSnapshot(lookup.patient.id, weather);
+      weatherStored = true;
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : "weather upsert failed");
+    }
+  }
   await syncVapiCallsForUser(lookup.patient.id);
   const records = await getUnifiedRecords(
     lookup.patient.id,
@@ -44,6 +55,7 @@ export async function GET() {
         phoneLinked: Boolean(lookup.patient.phone),
       },
       weather,
+      weatherStored,
       ...records,
     },
     { headers: NO_STORE },

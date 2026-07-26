@@ -1,6 +1,6 @@
 import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords, type TimelineItem } from "@/lib/server/records";
-import { fetchPressure } from "@/lib/server/openmeteo";
+import { fetchPressure, upsertPressureSnapshot } from "@/lib/server/openmeteo";
 import { syncVapiCallsForUser } from "@/lib/server/vapi-sync";
 
 /**
@@ -68,6 +68,11 @@ export async function GET() {
       // Pressure is fetched once and reused across polls — it moves hourly at
       // most, and Open-Meteo does not need hitting every three seconds.
       const weather = await fetchPressure().catch(() => null);
+      if (weather) {
+        await upsertPressureSnapshot(patientId, weather).catch((error) => {
+          console.error(error instanceof Error ? error.message : "weather upsert failed");
+        });
+      }
       const delta = weather?.pressureDelta24h ?? null;
 
       // First frame is the whole record, so a subscriber never needs a

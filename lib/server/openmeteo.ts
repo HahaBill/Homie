@@ -1,4 +1,5 @@
 import "server-only";
+import { supabaseAdmin } from "./supabase";
 
 /**
  * Open-Meteo barometric snapshot (PRD §9 — free, no API key).
@@ -17,6 +18,15 @@ export type PressureSnapshot = {
   /** Today's daily maxima — briefing detail, nullable when Open-Meteo has gaps. */
   uvIndexMax: number | null;
   tempMaxC: number | null;
+};
+
+export type StoredPressureSnapshot = {
+  user_id: string;
+  date: string;
+  pressure_hpa: number;
+  pressure_delta_24h: number;
+  temp_c: number;
+  humidity: number;
 };
 
 export async function fetchPressure(): Promise<PressureSnapshot | null> {
@@ -86,6 +96,34 @@ export async function fetchPressure(): Promise<PressureSnapshot | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Keep the profile's live weather reading in the same daily history used by
+ * Homie's reports and flare correlation. The table's (user_id, date) unique
+ * constraint makes concurrent profile/API requests safe.
+ */
+export async function upsertPressureSnapshot(
+  userId: string,
+  snapshot: PressureSnapshot,
+  date = new Date().toISOString().slice(0, 10),
+): Promise<StoredPressureSnapshot> {
+  const row: StoredPressureSnapshot = {
+    user_id: userId,
+    date,
+    pressure_hpa: snapshot.pressureHpa,
+    pressure_delta_24h: snapshot.pressureDelta24h,
+    temp_c: snapshot.tempC,
+    humidity: snapshot.humidity,
+  };
+  const { data, error } = await supabaseAdmin()
+    .from("weather")
+    .upsert(row, { onConflict: "user_id,date" })
+    .select("user_id, date, pressure_hpa, pressure_delta_24h, temp_c, humidity")
+    .single();
+
+  if (error) throw new Error(`weather upsert: ${error.message}`);
+  return data as StoredPressureSnapshot;
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
