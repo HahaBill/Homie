@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "./supabase";
+import { computeFlareRisk, type FlareRisk } from "./flare";
 
 /**
  * The unified record: one chronological view of everything Homie holds for a
@@ -42,13 +43,19 @@ export type UnifiedRecords = {
   callCount: number;
   messageCount: number;
   correlation: Correlation;
+  /** Null when today's pressure was not supplied by the caller. */
+  flareRisk: FlareRisk | null;
 };
 
 /** A pressure fall this size is the one the product is built around. */
 const DROP_HPA = -5;
 const WINDOW_DAYS = 30;
 
-export async function getUnifiedRecords(patientId: string): Promise<UnifiedRecords> {
+export async function getUnifiedRecords(
+  patientId: string,
+  /** Today's 24h barometric change, when the caller has it. */
+  pressureDelta24h: number | null = null,
+): Promise<UnifiedRecords> {
   const db = supabaseAdmin();
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
 
@@ -109,17 +116,32 @@ export async function getUnifiedRecords(patientId: string): Promise<UnifiedRecor
 
   timeline.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
+  // Observations are keyed to checkins, so narrow to this patient's.
+  const mine = (observations.data ?? []).filter((o) =>
+    (checkins.data ?? []).some((c) => c.id === o.checkin_id),
+  );
+  const correlation = correlate(weather.data ?? [], mine);
+
+  // Last week of reported pain, most recent last.
+  const weekAgo = Date.now() - 7 * 86_400_000;
+  const recentPain = mine
+    .filter((o) => new Date(o.created_at).getTime() >= weekAgo)
+    .map((o) => o.pain_level ?? 0);
+
   return {
     timeline,
     callCount: calls.data?.length ?? 0,
     messageCount: timeline.filter((t) => t.kind === "message").length,
-    correlation: correlate(
-      weather.data ?? [],
-      // Observations are keyed to checkins, so narrow to this patient's.
-      (observations.data ?? []).filter((o) =>
-        (checkins.data ?? []).some((c) => c.id === o.checkin_id),
-      ),
-    ),
+    correlation,
+    flareRisk:
+      pressureDelta24h === null && correlation.pressureDrops === 0
+        ? null
+        : computeFlareRisk({
+            pressureDelta24h,
+            pressureDrops: correlation.pressureDrops,
+            worseAfterDrop: correlation.worseAfterDrop,
+            recentPain,
+          }),
   };
 }
 

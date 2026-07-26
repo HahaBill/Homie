@@ -1,5 +1,6 @@
 import { getPatientForSession } from "@/lib/server/patient";
 import { getUnifiedRecords, type TimelineItem } from "@/lib/server/records";
+import { fetchPressure } from "@/lib/server/openmeteo";
 
 /**
  * Server-Sent Events for the unified record.
@@ -63,10 +64,15 @@ export async function GET() {
         }
       };
 
+      // Pressure is fetched once and reused across polls — it moves hourly at
+      // most, and Open-Meteo does not need hitting every three seconds.
+      const weather = await fetchPressure().catch(() => null);
+      const delta = weather?.pressureDelta24h ?? null;
+
       // First frame is the whole record, so a subscriber never needs a
       // separate fetch to render.
       try {
-        const initial = await getUnifiedRecords(patientId);
+        const initial = await getUnifiedRecords(patientId, delta);
         initial.timeline.forEach((item) => seen.add(keyOf(item)));
         send("snapshot", initial);
       } catch (err) {
@@ -78,13 +84,16 @@ export async function GET() {
       timer = setInterval(async () => {
         if (closed) return;
         try {
-          const next = await getUnifiedRecords(patientId);
+          const next = await getUnifiedRecords(patientId, delta);
           const fresh = next.timeline.filter((item) => !seen.has(keyOf(item)));
           for (const item of fresh) {
             seen.add(keyOf(item));
             send("item", item);
           }
-          if (fresh.length > 0) send("correlation", next.correlation);
+          if (fresh.length > 0) {
+            send("correlation", next.correlation);
+            if (next.flareRisk) send("flare", next.flareRisk);
+          }
           // Comment frame keeps proxies from idling the connection out.
           if (!closed) controller.enqueue(encoder.encode(": keep-alive\n\n"));
         } catch {

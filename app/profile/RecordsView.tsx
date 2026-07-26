@@ -32,6 +32,14 @@ type Correlation = {
   statement: string | null;
 };
 
+type FlareRisk = {
+  percent: number;
+  band: "low" | "moderate" | "elevated" | "high";
+  sampleSize: number;
+  basis: string;
+  usedDefault: boolean;
+};
+
 type Weather = {
   pressureHpa: number;
   pressureDelta24h: number;
@@ -66,6 +74,7 @@ function mmss(seconds: number | null): string {
 export default function RecordsView() {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [correlation, setCorrelation] = useState<Correlation | null>(null);
+  const [flare, setFlare] = useState<FlareRisk | null>(null);
   const [weather, setWeather] = useState<Weather>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [state, setState] = useState<"loading" | "live" | "error">("loading");
@@ -96,10 +105,15 @@ export default function RecordsView() {
       const d = JSON.parse((e as MessageEvent).data) as {
         timeline: TimelineItem[];
         correlation: Correlation;
+        flareRisk: FlareRisk | null;
       };
       setItems(d.timeline);
       setCorrelation(d.correlation);
+      setFlare(d.flareRisk ?? null);
       setState("live");
+    });
+    es.addEventListener("flare", (e) => {
+      setFlare(JSON.parse((e as MessageEvent).data) as FlareRisk);
     });
     es.addEventListener("item", (e) => {
       const item = JSON.parse((e as MessageEvent).data) as TimelineItem;
@@ -187,6 +201,25 @@ export default function RecordsView() {
       </div>
 
       <div className="side-cards">
+        {flare ? (
+          <div className={`flare-card flare-${flare.band}`}>
+            <span className="mono">FLARE LIKELIHOOD TODAY</span>
+            <div className="flare-figure">
+              <span className="flare-percent">{flare.percent}%</span>
+              <span className="flare-band">{flare.band}</span>
+            </div>
+            <div className="flare-bar" aria-hidden>
+              <div className="flare-fill" style={{ width: `${flare.percent}%` }} />
+            </div>
+            <p className="flare-basis">{flare.basis}</p>
+            <p className="flare-foot">
+              {flare.usedDefault
+                ? "Based on a neutral starting point — Homie has not seen enough of your own pressure days yet."
+                : `Based on ${flare.sampleSize} of your own pressure days.`}
+            </p>
+          </div>
+        ) : null}
+
         <div className="side-card">
           <span className="mono">TODAY</span>
           {weather ? (

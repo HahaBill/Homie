@@ -24,10 +24,13 @@ export async function GET() {
     return NextResponse.json({ error: lookup.reason }, { status, headers: NO_STORE });
   }
 
-  const [records, weather] = await Promise.all([
-    getUnifiedRecords(lookup.patient.id),
-    fetchPressure(),
-  ]);
+  // Weather first: the flare figure is computed from today's pressure change
+  // against this person's own history, so the record needs it.
+  const weather = await fetchPressure();
+  const records = await getUnifiedRecords(
+    lookup.patient.id,
+    weather?.pressureDelta24h ?? null,
+  );
 
   return NextResponse.json(
     {
